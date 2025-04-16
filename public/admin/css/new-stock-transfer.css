@@ -1,0 +1,469 @@
+
+        :root {
+            --bg-light: #f1efec;
+            --cream: #d4c9be;
+            --deep-blue: #123458;
+            --black: #030303;
+            --card-glass: rgba(244, 240, 233, 0.5);
+            --accent-blue: #123458;
+            --accent-cream: #d4c9be;
+            --accent-dark: #030303;
+            --accent-gold: #b2925e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            font-family: "Roboto Serif", serif;
+            background-color: var(--bg-light);
+            color: var(--black);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: var(--deep-blue);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 30px 0;
+            position: sticky;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .sidebar-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 0 20px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 20px;
+            margin: 0;
+        }
+
+        .sidebar-header h2 {
+            font-size: 40px;
+            margin-top: 43px;
+            font-family: "Courier New", monospace;
+            color: white;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .sidebar-nav {
+            padding: 0 20px;
+        }
+
+        .sidebar-nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sidebar-nav li {
+            margin: 15px 0;
+        }
+
+        .sidebar-nav a {
+            color: var(--cream);
+            text-decoration: none;
+            font-weight: bold;
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+            padding: 8px 15px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            text-align: left;
+        }
+
+        .sidebar-nav a:hover {
+            background-color: var(--cream);
+            color: var(--deep-blue);
+        }
+
+        .sidebar-nav .has-submenu {
+            width: 100%;
+        }
+
+        .sidebar-nav .has-submenu::after {
+            content: "\f078";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            font-size: 12px;
+            transition: transform 0.3s;
+            margin-left: auto;
+        }
+
+        .sidebar-nav .has-submenu.active::after {
+            transform: rotate(180deg);
+        }
+
+        .submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            padding-left: 0;
+        }
+
+        .submenu.active {
+            max-height: 500px;
+        }
+
+        .submenu li {
+            margin: 8px 0;
+        }
+
+        .submenu a {
+            font-size: 14px;
+            font-weight: normal;
+            padding: 5px 15px;
+            text-align: left;
+            display: flex;
+            align-items: center;
+        }
+
+        .submenu a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .submenu a:hover {
+            background-color: rgba(212, 201, 190, 0.2);
+        }
+
+        .top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 70px;
+            background: var(--deep-blue);
+            color: white;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 999;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            gap: 15px;
+        }
+
+        .top-bar .right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .top-bar .welcome {
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .top-bar .icon-link {
+            color: white;
+            font-size: 20px;
+            position: relative;
+            text-decoration: none;
+        }
+
+        .top-bar .icon-link:hover {
+            color: #ddd;
+        }
+
+        .top-bar .bi-bell-fill {
+            font-size: 20px;
+        }
+
+        .top-bar .badge {
+            position: absolute;
+            top: -8px;
+            right: -10px;
+            background: red;
+            color: white;
+            font-size: 10px;
+            padding: 2px 5px;
+            border-radius: 50%;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 110px 40px 80px 40px;
+            /* Increased bottom padding for footer */
+            background: var(--bg-light);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-wrapper {
+            flex: 1;
+            background-color: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .dashboard-header {
+            margin-bottom: 30px;
+        }
+
+        .dashboard-header h1 {
+            font-size: 32px;
+            color: var(--deep-blue);
+        }
+
+        /* Table and Filter Styles */
+
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 14px;
+            color: var(--deep-blue);
+            background-color: var(--bg-light);
+            margin-top: auto;
+            /* Pushes footer to bottom */
+        }
+
+        /* Add these styles to your existing style block */
+        .stock-transfer-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-header {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-header h2 {
+            font-size: 24px;
+            color: var(--deep-blue);
+            margin-bottom: 5px;
+        }
+
+        .form-header h3 {
+            font-size: 18px;
+            color: var(--black);
+            font-weight: normal;
+        }
+
+        .form-section {
+            margin-bottom: 20px;
+        }
+
+        .form-section h4 {
+            font-size: 16px;
+            color: var(--deep-blue);
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--cream);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: "Roboto Serif", serif;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .divider {
+            height: 1px;
+            background-color: var(--cream);
+            margin: 20px 0;
+        }
+
+        .sku-table {
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            background-color: var(--deep-blue);
+            color: white;
+            padding: 10px;
+            font-weight: bold;
+        }
+
+        .table-header div {
+            flex: 1;
+            padding: 0 10px;
+        }
+
+        .table-row {
+            display: flex;
+            padding: 10px;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        .table-row div {
+            flex: 1;
+            padding: 0 10px;
+        }
+
+        .table-row:last-child {
+            border-bottom: none;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: "Roboto Serif", serif;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-add {
+            background-color: var(--cream);
+            color: var(--deep-blue);
+        }
+
+        .btn-add:hover {
+            background-color: #c5b9ad;
+        }
+
+        .btn-cancel {
+            background-color: #f1f1f1;
+            color: #333;
+        }
+
+        .btn-cancel:hover {
+            background-color: #e1e1e1;
+        }
+
+        .btn-submit {
+            background-color: var(--deep-blue);
+            color: white;
+        }
+
+        .btn-submit:hover {
+            background-color: #0f2a47;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        /* Add these styles to your existing style block */
+        .sku-row {
+            margin-bottom: 15px;
+        }
+
+        .sku-table {
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            background-color: var(--deep-blue);
+            color: white;
+            padding: 10px;
+            font-weight: bold;
+        }
+
+        .table-header div {
+            flex: 1;
+            padding: 0 10px;
+        }
+
+        .table-row {
+            display: flex;
+            padding: 10px;
+            align-items: center;
+        }
+
+        .table-row div {
+            flex: 1;
+            padding: 0 10px;
+        }
+
+        .btn-add {
+            background-color: var(--cream);
+            color: var(--deep-blue);
+            margin-top: 10px;
+        }
+
+        .btn-add:hover {
+            background-color: #c5b9ad;
+        }
+
+        .btn-remove {
+            background-color: #ff6b6b;
+            color: white;
+            padding: 5px 10px;
+        }
+
+        .btn-remove:hover {
+            background-color: #ff5252;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .table-row {
+                flex-wrap: wrap;
+            }
+
+            .table-row div {
+                flex: 0 0 100%;
+                margin-bottom: 10px;
+            }
+
+            .table-row div:last-child {
+                margin-bottom: 0;
+            }
+        }
+   
