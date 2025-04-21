@@ -5,18 +5,56 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Consumption;
 use App\Models\Sku;
+use App\Models\Stock;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ConsumptionController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $consumptions = Consumption::with('sku')->paginate(10);
+
+        $query = Consumption::with('stock');
+
+        if ($request->filled('from_date')) {
+            $query->whereDate('date', '>=', $request->from_date);
+        }
+
+        if ($request->filled('to_date')) {
+            $query->whereDate('date', '<=', $request->to_date);
+        }
+
+        if ($request->filled('search')) {
+            $query->whereHas('stock', function ($q) use ($request) {
+                $q->where('product_name', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        $consumptions = $query->orderBy('date', 'desc')->paginate(10);
+
+        $totalConsumption = $query->sum('quantity');
+
+        if ($request->ajax()) {
+            return response()->json([
+                'status' => true,
+                'data' => $consumptions->items(),
+                'total_consumption' => $totalConsumption,
+                'pagination' => [
+                    'total' => $consumptions->total(),
+                    'current_page' => $consumptions->currentPage(),
+                    'per_page' => $consumptions->perPage(),
+                    'last_page' => $consumptions->lastPage(),
+                ],
+            ]);
+        }
+
+        // For non-AJAX requests, return the full page view
         return view('admin.consumption.index', compact('consumptions'));
     }
+
 
 
     /**
@@ -24,8 +62,9 @@ class ConsumptionController extends Controller
      */
     public function create()
     {
-        $skus = Sku::all();
-        return view('admin.consumption.create', compact('skus'));
+        $stocks = Stock::all();
+
+        return view('admin.consumption.create', compact('stocks'));
     }
 
     public function store(Request $request)
@@ -34,35 +73,68 @@ class ConsumptionController extends Controller
             'date' => 'required|date',
             'time' => 'required|date_format:H:i',
             'items' => 'required|array',
-            'items.*.sku_id' => 'required|exists:skus,id',
+            'items.*.stock_id' => 'required|exists:stocks,id',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit' => 'required|string',
         ]);
 
-        foreach ($validated['items'] as $item) {
-            $existing = Consumption::where('date', $validated['date'])
-                ->where('sku_id', $item['sku_id']) // removed time condition
-                ->first();
+        DB::beginTransaction();
 
-            if ($existing) {
-                $existing->update([
-                    'quantity' => $existing->quantity + $item['quantity'],
-                    'unit' => $item['unit'],
-                    'time' => $validated['time'], // optionally update latest time
-                ]);
-            } else {
-                Consumption::create([
-                    'date' => $validated['date'],
-                    'time' => $validated['time'],
-                    'sku_id' => $item['sku_id'],
-                    'quantity' => $item['quantity'],
-                    'unit' => $item['unit'],
-                ]);
+        try {
+            foreach ($validated['items'] as $item) {
+                $stock = Stock::find($item['stock_id']);
+
+                // Check if stock is available
+                if ($stock->quantity < $item['quantity']) {
+                    DB::rollBack();
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => "Insufficient stock for {$stock->product_name}. Available: {$stock->quantity}, Requested: {$item['quantity']}"
+                    ], 400);
+                }
+
+                // Calculate total = quantity × rate
+                $rate = $stock->rate ?? 0;
+                $itemTotal = $item['quantity'] * $rate;
+
+                // Reduce quantity from stock
+                $stock->quantity -= $item['quantity'];
+                $stock->save();
+
+                // Update or create in Consumption
+                $existing = Consumption::where('date', $validated['date'])
+                    ->where('stock_id', $item['stock_id'])
+                    ->first();
+
+                if ($existing) {
+                    $existing->update([
+                        'quantity' => $existing->quantity + $item['quantity'],
+                        'unit' => $item['unit'],
+                        'time' => $validated['time'],
+                        'total' => $existing->total + $itemTotal,
+                    ]);
+                } else {
+                    Consumption::create([
+                        'date' => $validated['date'],
+                        'time' => $validated['time'],
+                        'stock_id' => $item['stock_id'],
+                        'quantity' => $item['quantity'],
+                        'unit' => $item['unit'],
+                        'total' => $itemTotal,
+                    ]);
+                }
             }
-        }
 
-        return response()->json(['status' => 'success', 'message' => 'Consumption data saved successfully.']);
+            DB::commit();
+
+            return response()->json(['status' => 'success', 'message' => 'Consumption data saved and stock updated successfully.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error', 'message' => 'An error occurred while saving data.'], 500);
+        }
     }
+
+
 
 
     public function show(string $id) {}
@@ -80,7 +152,7 @@ class ConsumptionController extends Controller
 
     public function update(Request $request, $id)
     {
-      
+
         $consumption = Consumption::findOrFail($id);
 
 
@@ -97,7 +169,7 @@ class ConsumptionController extends Controller
         $consumption->time = $request->input('time');
         $consumption->total = $request->input('total');
 
-        $consumption->delete(); 
+        $consumption->delete();
 
         // Add new items
         foreach ($request->input('items') as $item) {

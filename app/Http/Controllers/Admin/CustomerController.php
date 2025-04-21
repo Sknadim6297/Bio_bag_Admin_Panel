@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Str;
 use App\Models\Customer;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\View;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -14,12 +15,20 @@ class CustomerController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-
         $customers = Customer::paginate(10);
+
+        if ($request->ajax()) {
+            $view = view('admin.customer.index', compact('customers'))->render();
+            return response()->json(['table' => $view]);
+        }
+
         return view('admin.customer.index', compact('customers'));
     }
+
+
+
 
     /**
      * Show the form for creating a new resource.
@@ -41,10 +50,6 @@ class CustomerController extends Controller
             'payment_terms' => 'required|string',
             'gstin' => 'required|string|regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/|unique:customers,gstin',
             'pan_number' => 'required|string|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/|unique:customers,pan_number',
-            'bank_name' => 'required|string',
-            'branch_name' => 'required|string',
-            'account_number' => 'required|digits_between:9,18',
-            'ifsc_code' => 'required|string|regex:/^[A-Z]{4}0[A-Z0-9]{6}$/',
             'status' => 'required|in:active,inactive',
         ];
         $validated = $request->validate($validation);
@@ -58,10 +63,6 @@ class CustomerController extends Controller
         $customer->payment_terms = $validated['payment_terms'];
         $customer->gstin = $validated['gstin'];
         $customer->pan_number = $validated['pan_number'];
-        $customer->bank_name = $validated['bank_name'];
-        $customer->branch_name = $validated['branch_name'];
-        $customer->account_number = $validated['account_number'];
-        $customer->ifsc_code = $validated['ifsc_code'];
         $customer->status = $validated['status'];
         $customer->save();
 
@@ -114,10 +115,6 @@ class CustomerController extends Controller
                 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
                 Rule::unique('customers', 'pan_number')->ignore($customer->id),
             ],
-            'bank_name' => 'required|string',
-            'branch_name' => 'required|string',
-            'account_number' => 'required|digits_between:9,18',
-            'ifsc_code' => 'required|string|regex:/^[A-Z]{4}0[A-Z0-9]{6}$/',
             'status' => 'required|in:active,inactive',
         ];
 
@@ -131,10 +128,6 @@ class CustomerController extends Controller
         $customer->payment_terms = $validated['payment_terms'];
         $customer->gstin = $validated['gstin'];
         $customer->pan_number = $validated['pan_number'];
-        $customer->bank_name = $validated['bank_name'];
-        $customer->branch_name = $validated['branch_name'];
-        $customer->account_number = $validated['account_number'];
-        $customer->ifsc_code = $validated['ifsc_code'];
         $customer->status = $validated['status'];
         $customer->save();
 
@@ -165,9 +158,31 @@ class CustomerController extends Controller
     public function search(Request $request)
     {
         $searchTerm = $request->input('search');
-        $customers = Customer::where('customer_name', 'like', '%' . $searchTerm . '%')
-            ->orWhere('customer_code', 'like', '%' . $searchTerm . '%')
-            ->paginate(10);
+
+        $query = Customer::query();
+
+        if ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('customer_name', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('customer_code', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('mobile_number', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('payment_terms', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('address', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('status', 'like', '%' . $searchTerm . '%');
+            });
+        }
+        
+        $customers = $query->paginate(10);
+
+        if ($request->ajax()) {
+            $tableView = view('admin.customer.index', compact('customers'))->render();
+            $paginationView = View::make('pagination::bootstrap-5', ['paginator' => $customers])->render();
+
+            return response()->json([
+                'table' => $tableView,
+                'pagination' => $paginationView,
+            ]);
+        }
 
         return view('admin.customer.index', compact('customers'));
     }

@@ -82,13 +82,6 @@
           </tr>
         @endforeach
       </tbody>
-      <tfoot>
-        <tr>
-          {{-- <td colspan="8" class="text-center">
-            {{ $customers->links() }} 
-          </td> --}}
-        </tr>
-      </tfoot>      
     </table>
   </div>
 
@@ -114,52 +107,39 @@
 @endsection
 
 @section('scripts')
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-  $(document).ready(function() {
-    $('#customerSearch').on('keyup', function() {
+  $(document).ready(function () {
+  
+    $('#customerSearch').on('keyup', function () {
       let searchTerm = $(this).val();
 
       $.ajax({
-        url: "{{ route('admin.customer.index') }}",
-        method: 'GET',
-        data: {
-          search: searchTerm
+        url: "{{ route('admin.customer.search') }}",
+        type: "GET",
+        data: { search: searchTerm },
+        success: function (response) {
+          $('#customerTableBody').html(response.customers);
+          $('.pagination').html(response.pagination);
         },
-        success: function(response) {
-          let rows = '';
-          $.each(response.customers, function(index, customer) {
-            rows += `
-              <tr>
-                <td>${index + 1}</td>
-                <td>${customer.customer_name}</td>
-                <td>${customer.customer_code}</td>
-                <td>${customer.mobile_number}</td>
-                <td>${customer.payment_terms}</td>
-                <td>${customer.address}</td>
-                <td>
-                  <span class="badge ${customer.status === 'active' ? 'bg-success' : 'bg-secondary'}">
-                    ${customer.status.charAt(0).toUpperCase() + customer.status.slice(1)}
-                  </span>
-                </td>
-                <td>
-                  <div class="action-buttons">
-                    <a href="{{ route('admin.customer.edit', '') }}/${customer.id}" class="btn btn-sm btn-primary me-1" title="Edit">
-                      <i class="fas fa-edit"></i><span class="action-text">Edit</span>
-                    </a>
-                    <a href="javascript:void(0);" class="btn btn-sm btn-danger delete-item" data-url="{{ route('admin.customer.destroy', '') }}/${customer.id}" title="Delete">
-                      <i class="fas fa-trash-alt"></i><span class="action-text">Delete</span>
-                    </a>
-                  </div>
-                </td>
-              </tr>
-            `;
-          });
-          $('#customerTableBody').html(rows);
+        error: function (xhr) {
+          console.error(xhr.responseText);
+        }
+      });
+    });
+    $(document).on('click', '.pagination a', function (e) {
+      e.preventDefault();
+      let url = $(this).attr('href');
+
+      $.ajax({
+        url: url,
+        type: "GET",
+        success: function (response) {
+          $('#customerTableBody').html(response.customers);
+          $('.pagination').html(response.pagination);
         }
       });
     });
   });
-</script>
-
 </script>
 @endsection

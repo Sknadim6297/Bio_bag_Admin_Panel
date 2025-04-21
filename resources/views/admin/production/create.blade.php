@@ -15,7 +15,7 @@
     <div class="form-group">
       <label for="datetime">Date & Time</label>
       <input type="datetime-local" name="production_datetime" id="datetime" class="form-control" required>
-    </div>
+  </div>
   
     <div class="form-group">
       <label for="customer_id">Customer Name</label>
@@ -107,6 +107,21 @@ $(document).ready(function () {
         });
     });
 });
+document.addEventListener('DOMContentLoaded', function () {
+    const datetimeField = document.getElementById('datetime');
+    const now = new Date();
+
+    // Extract local date and time parts
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0'); 
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+
+    const localDatetime = `${year}-${month}-${day}T${hours}:${minutes}`;
+    datetimeField.value = localDatetime;
+});
+
 
 </script>
 @endsection

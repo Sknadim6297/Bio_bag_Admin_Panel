@@ -47,26 +47,6 @@
     </div>
 
     <div class="form-section">
-      <h2 class="section-title">Bank Details</h2>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="bankName">Bank Name</label>
-          <input type="text" id="bankName" name="bank_name" class="form-control" placeholder="Bank Name" required />
-        </div>
-        <div class="form-group">
-          <label for="branchName">Branch Name</label>
-          <input type="text" id="branchName" name="branch_name" class="form-control" placeholder="Branch Name" required />
-        </div>
-        <div class="form-group">
-          <label for="accountNumber">Account Number</label>
-          <input type="text" id="accountNumber" name="account_number" class="form-control" placeholder="Account Number" pattern="[0-9]{9,18}" required />
-          <small class="form-text">9-18 digit account number</small>
-        </div>
-        <div class="form-group">
-          <label for="ifscCode">IFSC Code</label>
-          <input type="text" id="ifscCode" name="ifsc_code" class="form-control" placeholder="IFSC Code" pattern="^[A-Z]{4}0[A-Z0-9]{6}$" required />
-          <small class="form-text">Format: ABCD0123456</small>
-        </div>
         <div class="form-group">
           <label for="status">Status</label>
           <select id="status" name="status" class="form-control" required>

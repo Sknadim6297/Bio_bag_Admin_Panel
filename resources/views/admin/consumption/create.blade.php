@@ -16,13 +16,13 @@
       <div class="form-col">
           <div class="form-group">
               <label for="consumption-date">Date</label>
-              <input type="date" id="consumption-date" required>
+              <input type="date" id="consumption-date" name="date" required >
           </div>
       </div>
       <div class="form-col">
           <div class="form-group">
               <label for="consumption-time">Time</label>
-              <input type="time" id="consumption-time" required>
+              <input type="time" id="consumption-time" required >
           </div>
       </div>
   </div>
@@ -38,8 +38,8 @@
                   <label for="product-1">Product</label>
                   <select id="product-1" name="products[]" required>
                       <option value="">Select Product</option>
-                      @foreach($skus as $sku)
-                          <option value="{{ $sku->id }}">{{ $sku->product_name }}</option>
+                      @foreach($stocks as $stock)
+                          <option value="{{ $stock->id }}">{{ $stock->product_name }}</option>
                       @endforeach
                   </select>
               </div>
@@ -91,66 +91,70 @@
 @section('scripts')
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-  $(document).ready(function () {
-    // Form submission
-    $('#consumptionForm').on('submit', function (e) {
-        e.preventDefault();
+    $(document).ready(function () {
+        // Form submission
+        $('#consumptionForm').on('submit', function (e) {
+            e.preventDefault();
 
-        const formData = {
-            date: $('#consumption-date').val(),
-            time: $('#consumption-time').val(),
-            items: [],
-            total: $('#total-consumption').val()
-        };
+            const formData = {
+                date: $('#consumption-date').val(),
+                time: $('#consumption-time').val(),
+                items: [],
+                total: $('#total-consumption').val()
+            };
 
-        $('.product-item').each(function () {
-            const itemId = $(this).data('item');
-            const product = $(`#product-${itemId}`).val();
-            const quantity = $(`#quantity-${itemId}`).val();
-            const unit = $(`#unit-${itemId}`).val();
+            $('.product-item').each(function () {
+                const itemId = $(this).data('item');
+                const product = $(`#product-${itemId}`).val();
+                const quantity = $(`#quantity-${itemId}`).val();
+                const unit = $(`#unit-${itemId}`).val();
 
-            if (product && quantity && unit) {
-                formData.items.push({ product, quantity, unit });
-            }
-        });
+                if (product && quantity && unit) {
+                    formData.items.push({ product, quantity, unit });
+                }
+            });
 
-        $.ajax({
-    url: "{{ route('admin.consumption.store') }}",
-    method: 'POST',
-    data: {
-        _token: '{{ csrf_token() }}',
-        date: formData.date,
-        time: formData.time,
-        total: formData.total,
-        items: formData.items.map(item => ({
-            sku_id: item.product,
-            quantity: item.quantity,
-            unit: item.unit
-        }))
+            $.ajax({
+        url: "{{ route('admin.consumption.store') }}",
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            date: formData.date,
+            time: formData.time,
+            total: formData.total,
+            items: formData.items.map(item => ({
+                stock_id: item.product,
+                quantity: item.quantity,
+                unit: item.unit
+            }))
+        },
+        success: function (response) {
+        if (response.status) {
+            toastr.success(response.message);
+            setTimeout(() => {
+                window.location.href = "{{ route('admin.consumption.index') }}";
+            }, 2000);
+        } else {
+            toastr.error(response.message);
+        }
     },
-    success: function (response) {
-    if (response.status) {
-        toastr.success(response.message);
-        setTimeout(() => {
-            window.location.href = "{{ route('admin.consumption.index') }}";
-        }, 2000);
-    } else {
-        toastr.error(response.message);
-    }
-},
 
     error: function (xhr) {
-        if (xhr.status === 422) {
-            let errors = xhr.responseJSON.errors;
-            for (let field in errors) {
-                toastr.error(errors[field][0]);
-            }
-        } else {
-            toastr.error('Something went wrong. Please try again.');
+    if (xhr.status === 422) {
+        let errors = xhr.responseJSON.errors;
+        for (let field in errors) {
+            toastr.error(errors[field][0]);
         }
+    } else if (xhr.responseJSON && xhr.responseJSON.message) {
+      
+        toastr.error(xhr.responseJSON.message);
+    } else {
+        toastr.error('Something went wrong. Please try again.');
     }
-});
+}
+
     });
+        });
 
     // Consumption Form Functionality
     const productContainer = $('#productItemsContainer');
@@ -174,8 +178,8 @@
                             <label for="product-${itemCount}">Product</label>
                             <select id="product-${itemCount}" required>
                                 <option value="">Select Product</option>
-                                @foreach($skus as $sku)
-                                    <option value="{{ $sku->id }}">{{ $sku->product_name }}</option>
+                                @foreach($stocks as $stock)
+                                    <option value="{{ $stock->id }}">{{ $stock->product_name }}</option>
                                 @endforeach
                             </select>
                         </div>

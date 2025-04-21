@@ -8,9 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 class Consumption extends Model
 {
     use HasFactory;
-    public function sku()
+
+    public function stock()
     {
-        return $this->belongsTo(Sku::class, 'sku_id');
+        return $this->belongsTo(Stock::class, 'stock_id');
     }
-    protected $fillable = ['date', 'time', 'sku_id', 'quantity', 'unit'];
+    protected $fillable = ['date', 'time', 'stock_id', 'quantity', 'unit'];
 }

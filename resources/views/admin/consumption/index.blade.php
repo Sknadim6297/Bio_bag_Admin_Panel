@@ -16,70 +16,120 @@
 <div class="filter-container">
   <div class="search-box">
     <i class="fas fa-search"></i>
-    <input type="text" placeholder="Search consumption...">
+    <input type="text" id="search" placeholder="Search consumption...">
   </div>
   <div class="date-filter">
     <label>From:</label>
     <input type="date" id="from-date">
     <label>To:</label>
     <input type="date" id="to-date">
-    <button class="btn btn-secondary">
-      <i class="fas fa-filter"></i> Filter
+    <button class="btn btn-secondary" id="filter-btn">
+      <i class="fas fa-filter"></i>
+    </button>
+       <button class="btn btn-secondary" id="reset-btn">
+      <i class="fas fa-undo"></i>
     </button>
   </div>
 </div>
 
+<div id="final-consumption" class="summary-box mt-3">
+  <h5>Total Consumption: <span id="final-consumption-value">0</span> kg</h5>
+</div>
+
 <!-- Consumption Table -->
-<table class="consumption-table">
+<table class="table table-bordered consumption-table">
   <thead>
     <tr>
       <th>SL No</th>
       <th>Date & Time</th>
       <th>Product</th>
       <th>Quantity</th>
-      <th>Total Consumption</th>
-      <th>Action</th>
     </tr>
   </thead>
   <tbody>
-    @foreach($consumptions as $consumption)
-      <tr>
-        <td>{{ $loop->iteration }}</td>
-        <td>{{ $consumption->date }} {{ $consumption->time }}</td>
-        <td>{{ $consumption->sku->product_name ?? 'N/A' }}</td>
-        <td>{{ $consumption->quantity }}</td>
-        <td>{{ $consumption->quantity * $consumption->unit_price }} kg</td>
-        <td>
-          <div class="action-buttons">
-            <a href="{{ route('admin.consumption.edit', $consumption->id) }}" class="btn btn-sm btn-primary me-1" title="Edit">
-                <i class="fas fa-edit"></i><span class="action-text">Edit</span>
-            </a>
-            <a href="javascript:void(0);" class="action-btn delete-btn delete-item" data-url="{{ route('admin.consumption.destroy', $consumption->id) }}" title="Delete">
-              <i class="fas fa-trash-alt"></i><span class="action-text">Delete</span>
-          </a>
-        </div>
-        </td>
-      </tr>
-    @endforeach
+    <!-- Rows will be populated dynamically by JS -->
   </tbody>
-  
 </table>
 
-<!-- Pagination -->
-<div class="pagination">
-  <button class="page-btn"><i class="fas fa-angle-double-left"></i></button>
-  <button class="page-btn"><i class="fas fa-angle-left"></i></button>
-  <button class="page-btn active">1</button>
-  <button class="page-btn">2</button>
-  <button class="page-btn">3</button>
-  <button class="page-btn"><i class="fas fa-angle-right"></i></button>
-  <button class="page-btn"><i class="fas fa-angle-double-right"></i></button>
+{{-- Pagination --}}
+<div class="mt-3">
+  <div class="pagination">
+    <!-- Pagination buttons will be populated dynamically by JS -->
+  </div>
 </div>
+
 @endsection
 
 @section('scripts')
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+$(document).ready(function () {
 
+  function fetchData(page = 1) {
+    let from = $('#from-date').val();
+    let to = $('#to-date').val();
+    let search = $('#search').val();
+
+    $.ajax({
+      url: "{{ route('admin.consumption.index') }}",
+      method: 'GET',
+      data: {
+        page: page,
+        from_date: from,
+        to_date: to,
+        search: search
+      },
+      success: function (res) {
+        console.log(res);
+        
+        let rows = '';
+        if (res.status && res.data.length > 0) {
+          res.data.forEach((item, index) => {
+            rows += `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${item.date} ${item.time}</td>
+                <td>${item.stock.product_name ?? 'N/A'}</td>
+                <td>${item.quantity} ${item.unit ?? ''}</td>
+              </tr>
+            `;
+          });
+
+          $('#final-consumption-value').text(res.total_consumption);
+
+          let pagination = '';
+          for (let i = 1; i <= res.pagination.last_page; i++) {
+            pagination += `<button class="page-btn" data-page="${i}">${i}</button>`;
+          }
+          $('.pagination').html(pagination);
+        } else {
+          rows = `<tr><td colspan="4" class="text-center text-muted">No data found</td></tr>`;
+          $('#final-consumption-value').text(0);
+        }
+        $('.consumption-table tbody').html(rows);
+      },
+      error: function () {
+        alert('Error fetching data!');
+      }
+    });
+  }
+
+  // Filter button click
+  $('#filter-btn').on('click', function () {
+    fetchData();  
+  });
+  
+
+
+  $(document).on('click', '.pagination button', function () {
+    let page = $(this).data('page');
+    fetchData(page);
+  });
+
+  
+
+  fetchData(); 
+
+});
 </script>
 @endsection

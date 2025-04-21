@@ -67,9 +67,6 @@
               <li>
                 <a href="{{ route('admin.grn.index') }}"><i class="fas fa-list"></i> Manage Purchase Order</a>
               </li>
-              <li>
-                <a href="{{ route('admin.grn.manage') }}"><i class="fas fa-list"></i> Manage GRN Process</a>
-              </li>
             </ul>
           </li>
           <li class="menu-item">
@@ -79,7 +76,7 @@
             >
             <ul class="submenu">
               <li>
-                <a href="manage-stock.html"><i class="fas fa-list"></i>Manage Stock</a>
+                <a href="{{ route('admin.stock.index') }}"><i class="fas fa-list"></i>Manage Stock</a>
               </li>
             </ul>
           </li>
@@ -114,7 +111,7 @@
             >
             <ul class="submenu">
               <li>
-                <a href="final-output.html"
+                <a href="{{ route('admin.final-output.index') }}"
                   ><i class="fas fa-list"></i>Manage Final Output</a
                 >
               </li>

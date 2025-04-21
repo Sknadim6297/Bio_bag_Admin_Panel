@@ -60,49 +60,21 @@
           <input type="text" id="panNumber" name="pan_number" class="form-control" value="{{ old('pan_number', $customer->pan_number) }}" />
         </div>
       </div>
+      
     </div>
-
-    <div class="form-section">
-      <h2 class="section-title">Bank Details</h2>
-      <div class="form-stacked">
-        <!-- Bank Name -->
-        <div class="form-group">
-          <label for="bankName">Bank Name</label>
-          <input type="text" id="bankName" name="bank_name" class="form-control" value="{{ old('bank_name', $customer->bank_name) }}" />
-        </div>
-
-        <!-- Branch Name -->
-        <div class="form-group">
-          <label for="branchName">Branch Name</label>
-          <input type="text" id="branchName" name="branch_name" class="form-control" value="{{ old('branch_name', $customer->branch_name) }}" />
-        </div>
-
-        <!-- Account Number -->
-        <div class="form-group">
-          <label for="accountNumber">Account Number</label>
-          <input type="text" id="accountNumber" name="account_number" class="form-control" value="{{ old('account_number', $customer->account_number) }}" />
-        </div>
-
-        <!-- IFSC Code -->
-        <div class="form-group">
-          <label for="ifscCode">IFSC Code</label>
-          <input type="text" id="ifscCode" name="ifsc_code" class="form-control" value="{{ old('ifsc_code', $customer->ifsc_code) }}" />
-        </div>
-        <div class="form-group">
-          <label for="status">Status</label>
-          <select id="status" name="status" class="form-control" required>
-            <option value="active" {{ $customer->status == 'active' ? 'selected' : '' }}>Active</option>
-            <option value="inactive" {{ $customer->status == 'inactive' ? 'selected' : '' }}>Inactive</option>
-          </select>
-        </div>
-      </div>
+    <div class="form-group">
+      <label for="status">Status</label>
+      <select id="status" name="status" class="form-control" required>
+        <option value="active" {{ $customer->status == 'active' ? 'selected' : '' }}>Active</option>
+        <option value="inactive" {{ $customer->status == 'inactive' ? 'selected' : '' }}>Inactive</option>
+      </select>
     </div>
-
     <!-- Form Actions -->
     <div class="form-actions">
       <a href="{{ route('admin.customer.index') }}" class="btn btn-cancel">Cancel</a>
       <button type="submit" class="btn btn-save">Update Customer</button>
     </div>
+    
   </form>
 </div>
 

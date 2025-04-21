@@ -20,10 +20,7 @@ class VendorController extends Controller
     {
         $vendors = Vendor::paginate(10);
         $totalVendors = Vendor::count();
-        $searchTerm = $request->input('search');
-        $vendors = Vendor::where('vendor_name', 'like', '%' . $searchTerm . '%')
-            ->orWhere('vendor_code', 'like', '%' . $searchTerm . '%')
-            ->paginate(10);
+
 
         return view('admin.vendor.index', compact('vendors', 'totalVendors'));
     }
@@ -158,5 +155,28 @@ class VendorController extends Controller
         }
 
         return response()->json(['success' => false, 'message' => 'Error occurred while deleting vendor.']);
+    }
+    public function search(Request $request)
+    {
+        $search = $request->input('search');
+
+        $vendors = Vendor::where('vendor_name', 'like', "%{$search}%")
+            ->orWhere('vendor_code', 'like', "%{$search}%")
+            ->get();
+
+        $data = $vendors->map(function ($vendor) {
+            return [
+                'vendor_name' => $vendor->vendor_name,
+                'vendor_code' => $vendor->vendor_code,
+                'mobile_number' => $vendor->mobile_number,
+                'payment_terms' => $vendor->payment_terms,
+                'address' => $vendor->address,
+                'status' => $vendor->status,
+                'edit_url' => route('admin.vendors.edit', $vendor->id),
+                'delete_url' => route('admin.vendors.destroy', $vendor->id),
+            ];
+        });
+
+        return response()->json(['data' => $data]);
     }
 }

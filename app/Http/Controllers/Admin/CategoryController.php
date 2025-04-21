@@ -97,4 +97,30 @@ class CategoryController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Category deleted successfully.']);
     }
+
+    
+    public function search(Request $request)
+    {
+        $search = $request->search;
+
+        $categories = Category::where('category_name', 'LIKE', "%$search%")
+            ->orWhere('category_code', 'LIKE', "%$search%")
+            ->get();
+
+        $data = $categories->map(function ($cat) {
+            return [
+                'id' => $cat->id,
+                'category_name' => $cat->category_name,
+                'category_code' => $cat->category_code,
+                'description' => $cat->description,
+                'status' => $cat->status,
+                'edit_url' => route('admin.category.edit', $cat->id),
+                'delete_url' => route('admin.category.destroy', $cat->id),
+            ];
+        });
+
+        return response()->json([
+            'data' => $data
+        ]);
+    }
 }

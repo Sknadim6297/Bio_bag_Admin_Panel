@@ -15,7 +15,7 @@
             Schema::create('purchase_order_items', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('purchase_order_id')->constrained()->onDelete('cascade');
-                $table->foreignId('sku_id')->constrained('skus')->onDelete('cascade');
+                $table->string('product_name');
                 $table->text('description')->nullable();
                 $table->integer('quantity');
                 $table->decimal('unit_price', 10, 2);

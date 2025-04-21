@@ -16,7 +16,7 @@
       <div class="form-col">
         <div class="form-group">
           <label for="po-date">PO Date</label>
-          <input type="date" id="po-date" name="po_date" required>
+          <input type="date" id="po-date" name="po_date"required>
         </div>
       </div>
     </div>
@@ -77,7 +77,7 @@
             <label for="payment-terms">Payment Terms</label>
             <select id="payment-terms" name="payment_terms" required>
               <option value="">Select Payment Terms</option>
-              <!-- Dynamically populated -->
+    
             </select>
           </div>
           
@@ -101,50 +101,56 @@
       
 
   <!-- Items Section -->
-  <div class="form-section">
-    <h2>Items</h2>
-    <table class="items-table">
-      <thead>
-        <tr>
-          <th>Product</th>
-          <th>Description</th>
-          <th>Quantity</th>
-          <th>Unit Price</th>
-           <th>Measurement</th>
-          <th>Total</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="items-table-body">
-        <tr>
-            <td>
-                <select class="product-select" name="products[]" required>
-                    <option value="">Select Product</option>
-                    @foreach($products as $product)
-                        <option value="{{ $product->id }}">{{ $product->product_name }}</option>
-                    @endforeach
-                </select>
-            </td>
-            <td><input type="text" name="descriptions[]" class="description" placeholder="Description"></td>
-            <td><input type="number" name="quantities[]" class="quantity" min="1" value="1" required></td>
-            <td><input type="number" name="unit_prices[]" class="unit-price" min="0" step="0.01" required></td>
-            <td>
-              <select class="form-select" name="measurements[]" required>
-                <option value="">Select Unit</option>
-                @foreach (['kg', 'g', 'l', 'pcs'] as $unit)
-                    <option value="{{ $unit }}">{{ strtoupper($unit) }}</option>
-                @endforeach
-            </select>
-            
-            </td>
-            <td><input type="text" name="totals[]" class="total" readonly></td>
-            <td><button type="button" class="btn btn-secondary remove-item">Remove</button></td>
-        </tr>
-    </tbody>
-    
-    </table>
-    <button type="button" id="add-item" class="btn btn-secondary">+ Add Item</button>
-  </div>
+  <div class="form-section mt-4">
+    <h2 class="mb-3">Items</h2>
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle text-center">
+            <thead class="table-dark" style="background-color:#123458; color:white;padding:20px">
+                <tr>
+                    <th>Product</th>
+                    <th>Description</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
+                    <th>Measurement</th>
+                    <th>Total</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="items-table-body">
+                <tr>
+                   <td>
+    <input type="text" name="products[]" class="form-control" placeholder="Product Name" required>
+</td>
+
+                    <td>
+                        <input type="text" name="descriptions[]" class="form-control" placeholder="Description">
+                    </td>
+                    <td>
+                        <input type="number" name="quantities[]" class="form-control quantity" min="1" value="1" required>
+                    </td>
+                    <td>
+                        <input type="number" name="unit_prices[]" class="form-control unit-price" min="0" step="0.01" required>
+                    </td>
+                    <td>
+                        <select class="form-select" name="measurements[]" required>
+                            <option value="">Select Unit</option>
+                            @foreach (['kg', 'g', 'l', 'pcs'] as $unit)
+                                <option value="{{ $unit }}">{{ strtoupper($unit) }}</option>
+                            @endforeach
+                        </select>
+                    </td>
+                    <td>
+                        <input type="text" name="totals[]" class="form-control total" readonly>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-danger remove-item">Remove</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <button type="button" id="add-item" class="btn btn-success mt-2">+ Add Item</button>
+</div>
 
   <!-- Summary Section -->
   <div class="form-section">
@@ -198,6 +204,9 @@
 @endsection
 
 @section('scripts')
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
 <script>
   const vendorData = @json($vendors);
 
@@ -366,7 +375,6 @@ document.getElementById('file-upload').addEventListener('change', function(e) {
       const dataTransfer = new DataTransfer();
       files.forEach(file => dataTransfer.items.add(file));
 
-      // Update the file input with the new files
       document.getElementById('file-upload').files = dataTransfer.files;
 
       // Remove the file from the display list
@@ -375,6 +383,44 @@ document.getElementById('file-upload').addEventListener('change', function(e) {
   });
 });
 
+window.addEventListener('DOMContentLoaded', (event) => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+
+    const currentDate = `${yyyy}-${mm}-${dd}`;
+    document.getElementById('po-date').value = currentDate;
+  });
+
+
+  $(document).ready(function () {
+
+    $(document).on('focus', 'input[name="products[]"]', function () {
+    const $this = $(this);
+
+    if (!$this.data("ui-autocomplete")) {
+        $this.autocomplete({
+            source: function (request, response) {
+                $.ajax({
+                    url: "{{ route('admin.grn.suggestions') }}",
+                    data: {
+                        term: request.term
+                    },
+                    success: function (data) {
+                        response(data);
+                    }
+                });
+            },
+            minLength: 1
+        });
+    }
+
+   
+    $this.autocomplete("search", "");
+});
+
+});
 
 </script>
 @endsection

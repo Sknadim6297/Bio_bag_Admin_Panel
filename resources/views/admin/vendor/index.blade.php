@@ -105,61 +105,59 @@
 @section('scripts')
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-  $(document).ready(function() {
-  $('#vendorSearch').on('keyup', function() {
-    let searchTerm = $(this).val();
+  $(document).ready(function () {
+    $('#vendorSearch').on('keyup', function () {
+  let searchTerm = $(this).val();
+  $.ajax({
+    url: "{{ route('admin.vendor.search') }}", 
+    method: 'GET',
+    data: {
+      search: searchTerm
+    },
+    success: function (response) {
+      let rows = '';
 
-    $.ajax({
-      url: "{{ route('admin.vendors.index') }}", 
-      method: 'GET',
-      data: {
-        search: searchTerm
-      },
-      success: function(response) {
-        let rows = ''; 
-
-        if (response.data && response.data.length > 0) {
-          response.data.forEach(function(vendor, index) {
-            rows += `
-              <tr>
-                <td>${index + 1}</td>
-                <td>${vendor.vendor_name}</td>
-                <td>${vendor.vendor_code}</td>
-                <td>${vendor.mobile_number}</td>
-                <td>${vendor.payment_terms}</td>
-                <td>${vendor.address}</td>
-                <td>
-                  <span class="badge ${vendor.status == 'active' ? 'bg-success' : 'bg-secondary'}">
-                    ${vendor.status.charAt(0).toUpperCase() + vendor.status.slice(1)}
-                  </span>
-                </td>
-                <td>
-                  <div class="action-buttons">
-                    <a href="${vendor.edit_url}" class="btn btn-sm btn-primary me-1" title="Edit">
-                      <i class="fas fa-edit"></i><span class="action-text">Edit</span>
-                    </a>
-                    <a href="javascript:void(0);" class="btn btn-sm btn-danger delete-item" data-url="${vendor.delete_url}" title="Delete">
-                      <i class="fas fa-trash-alt"></i><span class="action-text">Delete</span>
-                    </a>
-                  </div>
-                </td>
-              </tr>
-            `;
-          });
-        } else {
-          rows = `<tr><td colspan="8" class="text-center text-muted">No data found</td></tr>`;
-        }
-
-
-        $('#vendorTableBody').html(rows);
+      if (response.data && response.data.length > 0) {
+        response.data.forEach(function (vendor, index) {
+          rows += `
+            <tr>
+              <td>${index + 1}</td>
+              <td>${vendor.vendor_name}</td>
+              <td>${vendor.vendor_code}</td>
+              <td>${vendor.mobile_number}</td>
+              <td>${vendor.payment_terms}</td>
+              <td>${vendor.address}</td>
+              <td>
+                <span class="badge ${vendor.status == 'active' ? 'bg-success' : 'bg-secondary'}">
+                  ${vendor.status.charAt(0).toUpperCase() + vendor.status.slice(1)}
+                </span>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <a href="${vendor.edit_url}" class="btn btn-sm btn-primary me-1" title="Edit">
+                    <i class="fas fa-edit"></i><span class="action-text">Edit</span>
+                  </a>
+                  <a href="javascript:void(0);" class="btn btn-sm btn-danger delete-item" data-url="${vendor.delete_url}" title="Delete">
+                    <i class="fas fa-trash-alt"></i><span class="action-text">Delete</span>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+      } else {
+        rows = `<tr><td colspan="8" class="text-center text-muted">No data found</td></tr>`;
       }
-    });
+
+      $('#vendorTableBody').html(rows);
+    },
+    error: function(xhr, status, error) {
+      console.log("AJAX Error:", xhr.responseText);
+    }
   });
 });
 
-</script>
-
-
+  });
 </script>
 
 @endsection
