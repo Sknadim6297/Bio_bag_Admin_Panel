@@ -68,8 +68,14 @@
 <!-- Stock Movement Modal -->
 <div id="stockMovementModal" class="stock-modal" style="display: none;">
     <div class="stock-modal-content">
-        <span id="closeModal" class="close">&times;</span>
-        <h2 id="modalProductTitle">Stock Movement Details</h2>
+        <div class="modal-header d-flex justify-content-between align-items-center">
+            <h2 id="modalProductTitle">Stock Movement Details</h2>
+            <button id="downloadStockMovement" class="download-report-btn">
+                <i class="fas fa-file-download"></i>
+                <span>Download Report</span>
+            </button>
+            <span id="closeModal" class="close">&times;</span>
+        </div>
         <table>
             <thead>
                 <tr>
@@ -93,6 +99,8 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
+let currentStockData = null; // Add this variable to store current stock data
+
 $(document).on('click', '.stock-btn', function () {
     var productId = $(this).data('product-id');
 
@@ -101,6 +109,12 @@ $(document).on('click', '.stock-btn', function () {
         method: "GET",
         success: function (res) {
             if (res.status) {
+                currentStockData = {
+                    id: productId,
+                    product_name: res.product_name,
+                    available_stock: res.available_stock,
+                    transactions: res.transactions
+                };
                 let rows = '';
                 let totalBalance = 0;
 
@@ -149,7 +163,14 @@ $(document).on('click', '.stock-btn', function () {
     });
 });
 
-
+// Add download button handler
+$(document).on('click', '#downloadStockMovement', function() {
+    if (currentStockData && currentStockData.id) {
+        window.location.href = `/admin/stock/movement/${currentStockData.id}/download`;
+    } else {
+        alert('No stock data available to download');
+    }
+});
 
 $(document).on('click', '#closeModal', function () {
     $('#stockMovementModal').fadeOut();

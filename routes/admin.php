@@ -6,12 +6,15 @@ use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ConsumptionController;
 use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FinalOutputController;
 use App\Http\Controllers\Admin\GrnController;
 use App\Http\Controllers\Admin\ProductionController;
 use App\Http\Controllers\Admin\SkuController;
 use App\Http\Controllers\Admin\StockController;
 use App\Http\Controllers\Admin\VendorController;
+use App\Http\Controllers\Admin\Wastage1Controller;
+use App\Http\Controllers\Admin\Wastage2Controller;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,9 +32,11 @@ Route::post('login', [AuthController::class, 'login'])->name('login.submit');
 
 // Protected routes
 Route::middleware('auth:admin')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('admin.index');
-    })->name('admin.dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+
+    // Wastage Management Routes
+    Route::get('/wastage1', [Wastage1Controller::class, 'index'])->name('wastage1.index');
+    Route::get('/wastage2', [Wastage2Controller::class, 'index'])->name('wastage2.index');
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('admin.logout');
     Route::resource('vendors', VendorController::class);

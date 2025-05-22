@@ -9,9 +9,11 @@ use App\Models\PurchaseOrderItem;
 use App\Models\Sku;
 use App\Models\Stock;
 use App\Models\Vendor;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class GrnController extends Controller
 {
@@ -73,7 +75,7 @@ class GrnController extends Controller
      */
     public function store(Request $request)
     {
-        // Step 1: Validate Request
+        // Step 1: Validate the request
         $validator = Validator::make($request->all(), [
             'po_date' => 'required|date',
             'vendor_id' => 'required|exists:vendors,id',
@@ -114,7 +116,7 @@ class GrnController extends Controller
                 $poNumber = 'PO-' . $year . '-' . str_pad($lastSequence + 1, 3, '0', STR_PAD_LEFT);
             }
 
-            // Step 3: Create PO Record
+            // Step 3: Create Purchase Order
             $po = PurchaseOrder::create([
                 'po_date' => $request->po_date,
                 'po_number' => $poNumber,
@@ -133,7 +135,7 @@ class GrnController extends Controller
                 'reference' => $request->reference,
             ]);
 
-            // Step 4: Save Items and Update Stock
+            // Step 4: Save each product item & update stock
             foreach ($request->products as $index => $productName) {
                 $description = $request->descriptions[$index];
                 $quantity = $request->quantities[$index];
@@ -141,40 +143,41 @@ class GrnController extends Controller
                 $total = $request->totals[$index];
                 $measurement = $request->measurements[$index];
 
-                // Save PO item
+                // Normalize product name and measurement
+                $normalizedName = Str::of($productName)->lower()->trim()->squish();
+                $normalizedMeasurement = Str::of($measurement)->lower()->trim();
+
+                // Save item
                 PurchaseOrderItem::create([
                     'purchase_order_id' => $po->id,
-                    'product_name' => $productName,
+                    'product_name' => ucfirst($normalizedName),
                     'description' => $description,
                     'quantity' => $quantity,
                     'unit_price' => $unit_price,
                     'total' => $total,
-                    'measurement' => $measurement,
+                    'measurement' => $normalizedMeasurement,
                 ]);
 
-                // Normalize product name for consistency
-                $normalizedProductName = trim(strtolower($productName));
-
-                // Check if stock exists
-                $existingStock = Stock::whereRaw('LOWER(product_name) = ?', [$normalizedProductName])
-                    ->where('measurement', $measurement)
+                // Update or Create Stock
+                $stock = Stock::whereRaw('LOWER(TRIM(product_name)) = ?', [$normalizedName])
+                    ->whereRaw('LOWER(TRIM(measurement)) = ?', [$normalizedMeasurement])
                     ->first();
 
-                if ($existingStock) {
-                    $existingStock->quantity += $quantity;
-                    $existingStock->stock = 'in_stock';
-                    $existingStock->save();
+                if ($stock) {
+                    $stock->quantity += $quantity;
+                    $stock->stock = 'in_stock';
+                    $stock->save();
                 } else {
                     Stock::create([
-                        'product_name' => $productName,
-                        'measurement' => $measurement,
+                        'product_name' => ucfirst($normalizedName),
+                        'measurement' => $normalizedMeasurement,
                         'quantity' => $quantity,
                         'stock' => 'in_stock',
                     ]);
                 }
             }
 
-            // Step 5: Handle File Attachments
+            // Step 5: Handle Attachments
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $file) {
                     $path = $file->store('attachments', 'public');
@@ -281,5 +284,23 @@ class GrnController extends Controller
             ->pluck('product_name');
 
         return response()->json($results);
+    }
+
+    public function downloadPdf($id)
+    {
+        try {
+            $purchaseOrder = PurchaseOrder::with(['vendor', 'items'])->findOrFail($id);
+            
+            $pdf = PDF::loadView('admin.grn.pdf', [
+                'po' => $purchaseOrder,
+                'reportNumber' => 'GRN-' . str_pad($id, 6, '0', STR_PAD_LEFT),
+                'date' => now()->format('d/m/Y')
+            ]);
+
+            return $pdf->download('grn_' . $purchaseOrder->po_number . '_' . now()->format('Y-m-d') . '.pdf');
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error generating PDF: ' . $e->getMessage());
+        }
     }
 }

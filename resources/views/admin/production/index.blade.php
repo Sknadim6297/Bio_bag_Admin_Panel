@@ -5,92 +5,109 @@
 @endsection
 
 @section('content')
-<div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center;">
+<div class="dashboard-header">
   <h1>Manage Production</h1>
-  <a href="{{ route('admin.production.create') }}" class="btn-add">
-    <i class="fas fa-plus"></i> Add Production
-  </a>  
+  <div>
+    <a href="{{ route('admin.production.create') }}">
+      <button class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add Production
+      </button>
+    </a>
+    <a href="{{ route('admin.production.download-report') }}" class="btn btn-success ml-2" id="download-report-btn">
+      <i class="fas fa-file-pdf"></i> Download Report
+    </a>
+  </div>
 </div>
 
-<!-- Add Production Button -->
-<div class="action-bar">
-  
-
+<div class="action-bar">  
   <!-- Filters -->
-<div class="filter-container">
-  <!-- Date Filter -->
-  <div class="filter-group">
-      <label>From:</label>
+  <div class="filter-container">
+
+    <div class="filter-group">
+      <label for="from-date">From:</label>
       <input type="date" id="from-date">
-      <label>To:</label>
+    </div>
+
+    <div class="filter-group">
+      <label for="to-date">To:</label>
       <input type="date" id="to-date">
-  </div>
+    </div>
 
-  <div class="filter-group">
-      <label>Search:</label>
-      <input type="text" id="search" placeholder="Search by customer name">
-  </div>
+    <div class="filter-group">
+      <label for="search">Search:</label>
+      <input type="text" id="search" placeholder="Search by Customer Name">
+    </div>
 
-  <div class="filter-group">
-      <label>Customer:</label>
+    <div class="filter-group">
+      <label for="customer-id">Customer:</label>
       <select id="customer-id">
-          <option value="">-- Select Customer --</option>
-          @foreach ($customers as $customer)
-              <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
-          @endforeach
+        <option value="">-- Select Customer --</option>
+        @foreach ($customers as $customer)
+            <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
+        @endforeach
       </select>
+    </div>
 
-      <label>Micron:</label>
-      <select name="micron" id="micron">
-          <option value="">-- Select Micron --</option>
-          @foreach ($micronList as $micron)
-              <option value="{{ $micron }}">{{ $micron }}</option>
-          @endforeach
+    <div class="filter-group">
+      <label for="micron">Micron:</label>
+      <select id="micron">
+        <option value="">-- Select Micron --</option>
+        @foreach ($micronList as $micron)
+            <option value="{{ $micron }}">{{ $micron }}</option>
+        @endforeach
       </select>
+    </div>
 
-      <label>Size:</label>
-      <select name="size" id="size">
-          <option value="">-- Select Size --</option>
-          @foreach ($sizeList as $size)
-              <option value="{{ $size }}">{{ $size }}</option>
-          @endforeach
+    <div class="filter-group">
+      <label for="size">Size:</label>
+      <select id="size">
+        <option value="">-- Select Size --</option>
+        @foreach ($sizeList as $size)
+            <option value="{{ $size }}">{{ $size }}</option>
+        @endforeach
       </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="rolls_done">Rolls Done:</label>
+      <select id="rolls_done">
+        <option value="">-- Select Rolls Done --</option>
+        @foreach ($rollsDoneList as $rollsDone)
+            <option value="{{ $rollsDone }}">{{ $rollsDone }}</option>
+        @endforeach
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="machine_number">Machine No:</label>
+      <select id="machine_number">
+        <option value="">-- Select Machine No --</option>
+        @foreach ($machineNumberList as $machineNumber)
+            <option value="{{ $machineNumber }}">{{ $machineNumber }}</option>
+        @endforeach
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="kilograms_produced">Kgs Produced:</label>
+      <select id="kilograms_produced">
+        <option value="">-- Select Kgs Produced --</option>
+        @foreach ($kilogramsProducedList as $kilogramsProduced)
+            <option value="{{ $kilogramsProduced }}">{{ $kilogramsProduced }}</option>
+        @endforeach
+      </select>
+    </div>
+    <div class="form-group">
+      <label>&nbsp;</label> 
+      <button id="filter-btn" class="btn btn-primary"><i class="fas fa-filter"></i> Filter</button>
+    </div>
   </div>
-
-  <div class="filter-group">
-      <label>Rolls Done:</label>
-      <select name="rolls_done" id="rolls_done">
-          <option value="">-- Select Rolls Done --</option>
-          @foreach ($rollsDoneList as $rollsDone)
-              <option value="{{ $rollsDone }}">{{ $rollsDone }}</option>
-          @endforeach
-      </select>
-
-      <label>Machine No:</label>
-      <select name="machine_number" id="machine_number">
-          <option value="">-- Select Machine No --</option>
-          @foreach ($machineNumberList as $machineNumber)
-              <option value="{{ $machineNumber }}">{{ $machineNumber }}</option>
-          @endforeach
-      </select>
-
-      <label>Kgs Produced:</label>
-      <select name="kilograms_produced" id="kilograms_produced">
-          <option value="">-- Select Kgs Produced --</option>
-          @foreach ($kilogramsProducedList as $kilogramsProduced)
-              <option value="{{ $kilogramsProduced }}">{{ $kilogramsProduced }}</option>
-          @endforeach
-      </select>
-  </div>
-  <div class="form-group">
-    <label>&nbsp;</label> <!-- spacing fix -->
-    <button id="filter-btn" class="btn btn-primary w-100"><i class="fas fa-filter"></i>Filter</button>
-</div>
+  
 </div>
 
 </div>
 <div id="total-kilogram-produced" class="summary-box mt-3">
-  <h5>Total Kilogram Produced: <span id="total-output-value">0</span> kg</h5>
+  <h5 style="margin-top: 20px;">Total Kilogram Produced: <span id="total-output-value">0</span> kg</h5>
 </div>
 <!-- Production Table -->
 <table class="production-table">
@@ -123,7 +140,7 @@
   <tfoot>
     <tr>
       <td colspan="8">
-        {{ $productions->links() }} <!-- Pagination links -->
+        {{ $productions->links() }}
       </td>
     </tr>
   </tfoot>
@@ -133,6 +150,31 @@
 @section('scripts')
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+  function updateDownloadUrl() {
+  const from = $('#from-date').val();
+  const to = $('#to-date').val();
+  const search = $('#search').val();
+  const customer_id = $('#customer-id').val();
+  const micron = $('#micron').val();
+  const size = $('#size').val();
+  const machine_number = $('#machine_number').val();
+  const rolls_done = $('#rolls_done').val();
+  const kilograms_produced = $('#kilograms_produced').val();
+  
+  let url = "{{ route('admin.production.download-report') }}?";
+  if (from) url += `from_date=${from}&`;
+  if (to) url += `to_date=${to}&`;
+  if (search) url += `search=${search}&`;
+  if (customer_id) url += `customer_id=${customer_id}&`;
+  if (micron) url += `micron=${micron}&`;
+  if (size) url += `size=${size}&`;
+  if (machine_number) url += `machine_number=${machine_number}&`;
+  if (rolls_done) url += `rolls_done=${rolls_done}&`;
+  if (kilograms_produced) url += `kilograms_produced=${kilograms_produced}&`;
+  
+  $('#download-report-btn').attr('href', url);
+}
+
   $(document).ready(function () {
   
     // Function to fetch data
@@ -180,10 +222,8 @@
               `;
             });
             
-            // Update total kilograms produced
-            $('#total-output-value').text(res.total_kilogram); // Make sure the server response is sending 'total_kilogram'
-  
-            // Update pagination
+            $('#total-output-value').text(res.total_kilogram); 
+
             let pagination = '';
             if (res.pagination.total > res.pagination.per_page) {
               for (let i = 1; i <= res.pagination.last_page; i++) {
@@ -196,8 +236,6 @@
             rows = `<tr><td colspan="8" class="text-center text-muted">No data found</td></tr>`;
             $('#total-output-value').text(0); 
           }
-  
-          // Populate the table with new rows
           $('.production-table tbody').html(rows);
         },
         error: function () {
@@ -205,20 +243,35 @@
         }
       });
     }
-  
-    // Filter button click
-    $('#filter-btn').on('click', function () {
-      fetchData();  
+
+    $('#search').on('input', function() {
+      updateDownloadUrl();
     });
-  
-    // Pagination button click
+
+    $('#from-date, #to-date').on('change', function() {
+      updateDownloadUrl();
+    });
+    
+    $('#filter-btn').on('click', function () {
+      fetchData();
+      updateDownloadUrl();
+    });
+    
+    $('#reset-btn').on('click', function () {
+      $('#from-date').val('');
+      $('#to-date').val('');
+      $('#search').val('');
+      fetchData();
+      updateDownloadUrl();
+    });
+
     $(document).on('click', '.pagination button', function () {
       let page = $(this).data('page');
       fetchData(page);
     });
   
-    // Initial load
-    fetchData();  // Load data on page load
+    fetchData(); 
+    updateDownloadUrl();
   
   });
   </script>

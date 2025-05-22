@@ -7,19 +7,26 @@ use Illuminate\Database\Eloquent\Model;
 
 class FinalOutput extends Model
 {
-
     use HasFactory;
 
     protected $fillable = [
-        'customer_id',
-        'final_output_datetime',
-        'size',
-        'micron',
+        'date',
         'quantity',
+        'sku_id',
+        'remarks'
     ];
 
+    protected $casts = [
+        'date' => 'date',
+        'quantity' => 'decimal:2'
+    ];
+
+    public function sku()
+    {
+        return $this->belongsTo(Sku::class);
+    }
     public function customer()
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(Customer::class, 'customer_id');
     }
 }

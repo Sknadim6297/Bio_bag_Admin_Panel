@@ -65,7 +65,7 @@
             >
             <ul class="submenu">
               <li>
-                <a href="{{ route('admin.grn.index') }}"><i class="fas fa-list"></i> Manage Purchase Order</a>
+                <a href="{{ route('admin.grn.index') }}"><i class="fas fa-list"></i> Manage Purchase Bill</a>
               </li>
             </ul>
           </li>
@@ -123,6 +123,16 @@
               Management</a
             >
             <ul class="submenu">
+              <li>
+                <a href="{{ route('admin.wastage1.index') }}"
+                  ><i class="fas fa-recycle"></i> Wastage 1 (Consumption → Production)</a
+                >
+              </li>
+              <li>
+                <a href="{{ route('admin.wastage2.index') }}"
+                  ><i class="fas fa-recycle"></i> Wastage 2 (Production → Final)</a
+                >
+              </li>
               <li>
                 <a href="#"
                   ><i class="fas fa-file-alt"></i> Inventory Reports</a

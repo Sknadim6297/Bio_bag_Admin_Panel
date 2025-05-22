@@ -17,7 +17,12 @@ class Production extends Model
         'kilograms_produced',
         'machine_number',
         'micron',
-        'notes',
+        'notes'
+    ];
+
+    protected $casts = [
+        'production_datetime' => 'datetime',
+        'kilograms_produced' => 'decimal:2'
     ];
 
     public function customer()

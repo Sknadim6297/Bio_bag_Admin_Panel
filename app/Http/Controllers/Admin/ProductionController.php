@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Production;
 use Illuminate\Http\Request;
+use NumberFormatter;
+use App\Helpers\NumberToWords;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ProductionController extends Controller
 {
@@ -148,4 +151,72 @@ class ProductionController extends Controller
     {
         //
     }
+    public function downloadReport(Request $request)
+{
+    // Build a query based on the provided filters
+    $query = Production::with('customer');
+
+    // Apply all search filters
+    if ($request->filled('from_date')) {
+        $query->whereDate('production_datetime', '>=', $request->from_date);
+    }
+    
+    if ($request->filled('to_date')) {
+        $query->whereDate('production_datetime', '<=', $request->to_date);
+    }
+    
+    if ($request->filled('customer_id')) {
+        $query->where('customer_id', $request->customer_id);
+    }
+
+    if ($request->filled('micron')) {
+        $query->where('micron', $request->micron);
+    }
+
+    if ($request->filled('size')) {
+        $query->where('size', $request->size);
+    }
+
+    if ($request->filled('rolls_done')) {
+        $query->where('rolls_done', $request->rolls_done);
+    }
+
+    if ($request->filled('machine_number')) {
+        $query->where('machine_number', $request->machine_number);
+    }
+    
+    if ($request->filled('kilograms_produced')) {
+        $query->where('kilograms_produced', $request->kilograms_produced);
+    }
+    
+    if ($request->filled('search')) {
+        $searchTerm = trim($request->search);
+        $query->where(function ($q) use ($searchTerm) {
+            $q->whereHas('customer', function ($q2) use ($searchTerm) {
+                $q2->where('customer_name', 'like', "%$searchTerm%");
+            })
+            ->orWhere('machine_number', 'like', "%$searchTerm%")
+            ->orWhere('size', 'like', "%$searchTerm%")
+            ->orWhere('micron', 'like', "%$searchTerm%");
+        });
+    }
+    
+    // Get productions with applied filters (includes search results)
+    $productions = $query->orderBy('production_datetime', 'desc')->get();
+    $total = $productions->sum('kilograms_produced');
+    $totalInWords = ucfirst(NumberToWords::convert($total));
+    
+    // Generate PDF with totalInWords included
+    $pdf = PDF::loadView('admin.production.report_pdf', [
+        'productions' => $productions,
+        'total' => $total,
+        'totalInWords' => $totalInWords,
+        'reportNumber' => 'PROD-' . now()->format('YmdHis'),
+        'date' => now()->format('d/m/Y'),
+        'filters' => $request->all()
+    ]);
+    
+    return $pdf->stream('production_report_preview_' . now()->format('Y-m-d') . '.pdf');
+
+}
 }

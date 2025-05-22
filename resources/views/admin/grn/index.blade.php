@@ -1,4 +1,4 @@
-  @extends('layouts.layout')
+@extends('layouts.layout')
 
   @section('styles')
     <link rel="stylesheet" href="{{ asset('admin/css/manage-purchase.css') }}">
@@ -6,9 +6,9 @@
 
   @section('content')
   <div class="dashboard-header">
-    <h1>Manage Purchase Order</h1>
+    <h1>Manage Purchase Bill</h1>
     <button class="btn btn-primary" onclick="window.location.href='{{ route('admin.grn.create') }}'">
-      <i class="fas fa-plus"></i> Add Purchase Order
+      <i class="fas fa-plus"></i> Add Purchase Bill
     </button>
   </div>
 
@@ -55,8 +55,8 @@
           <th>Terms & Condition</th>
           <th>Customer Notes</th>
           <th>Reference#</th>
-          <th>Action</th>
-          {{-- <th>Action</th> --}}
+          <th>View</th>
+          <th>Download</th>
         </tr>
       </thead>
       <tbody>
@@ -79,14 +79,10 @@
             </button>
             </td>
           <td>
-            {{-- <div class="action-buttons">
-              <a href="{{ route('admin.grn.edit', $po->id) }}" class="btn btn-sm btn-primary me-1" title="Edit">
-                  <i class="fas fa-edit"></i><span class="action-text">Edit</span>
-              </a>
-              <a href="javascript:void(0);" class="btn btn-sm btn-danger delete-item" data-url="{{ route('admin.grn.destroy', $po->id) }}" title="Delete">
-                <i class="fas fa-trash-alt"></i><span class="action-text">Delete</span>
-            </a>
-          </div> --}}
+            <button class="download-btn" data-id="{{ $po->id }}" title="Download Report">
+                <i class="fas fa-download"></i> Download
+            </button>
+          </td>
         </tr>
         @endforeach
       </tbody>
@@ -195,5 +191,26 @@
         }
     });
     </script>
-    
+    <script>
+    document.querySelectorAll('.download-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const poId = this.getAttribute('data-id');
+            const button = this;
+            
+            // Show loading state
+            button.classList.add('loading');
+            const originalContent = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+            // Trigger download
+            window.location.href = `/admin/grn/${poId}/download`;
+
+            // Reset button after a delay
+            setTimeout(() => {
+                button.classList.remove('loading');
+                button.innerHTML = originalContent;
+            }, 2000);
+        });
+    });
+    </script>
   @endsection

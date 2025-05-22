@@ -7,8 +7,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Consumption;
 use App\Models\PurchaseOrderItem;
 use App\Models\Stock;
+use App\Models\StockMovement;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class StockController extends Controller
 {
@@ -127,11 +131,6 @@ class StockController extends Controller
         ]);
     }
 
-
-
-
-
-
     public function search(Request $request)
     {
         $search = $request->search;
@@ -157,5 +156,95 @@ class StockController extends Controller
     public function export()
     {
         return Excel::download(new StockExport, 'stocks.xlsx');
+    }
+
+    public function downloadMovement($id)
+    {
+        try {
+            // Check authentication
+            if (!Auth::guard('admin')->check()) {
+                Log::error('Unauthorized access attempt to download stock movement');
+                return redirect()->route('admin.login');
+            }
+
+            Log::info('Starting download for stock ID: ' . $id);
+
+            // Get stock with its related data
+            $stock = Stock::findOrFail($id);
+            $productName = $stock->product_name;
+            $productId = $stock->id;
+
+            // Get purchase and consumption data
+            $purchaseData = PurchaseOrderItem::select('quantity', 'created_at')
+                ->where('product_name', $productName)
+                ->whereNotNull('created_at')
+                ->get();
+
+            $consumptionData = Consumption::select('quantity', 'created_at')
+                ->where('stock_id', $productId)
+                ->whereNotNull('created_at')
+                ->get();
+
+            $transactions = [];
+
+            // Format purchase transactions
+            foreach ($purchaseData as $purchase) {
+                $transactions[] = [
+                    'date' => $purchase->created_at,
+                    'type' => 'Purchase',
+                    'quantity' => (float) $purchase->quantity,
+                    'balance' => 0
+                ];
+            }
+
+            // Format consumption transactions
+            foreach ($consumptionData as $consumption) {
+                $transactions[] = [
+                    'date' => $consumption->created_at,
+                    'type' => 'Consumption',
+                    'quantity' => -(float) $consumption->quantity,
+                    'balance' => 0
+                ];
+            }
+
+            if (empty($transactions)) {
+                Log::warning('No transactions found for stock ID: ' . $id);
+                return back()->with('error', 'No transactions found for this stock');
+            }
+
+            // Sort and calculate balance
+            usort($transactions, function ($a, $b) {
+                return strtotime($a['date']) - strtotime($b['date']);
+            });
+
+            $balance = 0;
+            foreach ($transactions as &$t) {
+                $balance += $t['quantity'];
+                $t['balance'] = $balance;
+            }
+
+            $viewData = [
+                'stock' => $stock,
+                'transactions' => $transactions,
+                'reportNumber' => 'STK-' . now()->format('YmdHis'),
+                'date' => now()->format('d/m/Y'),
+                'available_stock' => $balance,
+                'product_name' => $productName
+            ];
+
+            // Initialize PDF
+            $pdf = PDF::loadView('admin.stock.movement_pdf', $viewData);
+            $pdf->setPaper('A4', 'portrait');
+
+            $fileName = 'stock_movement_' . str_replace([' ', '/'], '_', $productName)
+                . '_' . now()->format('Y-m-d') . '.pdf';
+
+            return $pdf->download($fileName);
+
+        } catch (\Exception $e) {
+            Log::error('PDF Generation Error: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return back()->with('error', 'Error generating PDF: ' . $e->getMessage());
+        }
     }
 }

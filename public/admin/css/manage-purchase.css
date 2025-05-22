@@ -448,6 +448,33 @@ body {
     /* Pushes footer to bottom */
 }
 
+.download-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease;
+}
+
+.download-btn:hover {
+    background-color: #218838;
+    transform: translateY(-1px);
+}
+
+.download-btn i {
+    font-size: 14px;
+}
+
+.download-btn.loading {
+    opacity: 0.7;
+    cursor: wait;
+}
+
 @media (max-width: 768px) {
     .action-bar {
         flex-direction: column;
