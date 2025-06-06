@@ -10,9 +10,9 @@
               ><i class="fas fa-dashboard"></i>&nbsp;&nbsp; Dashboard</a
             >
           </li>
-          <li>
+          {{-- <li>
             <a href="user.html"><i class="fas fa-user"></i>&nbsp;&nbsp; User</a>
-          </li>
+          </li> --}}
           <li class="menu-item">
             <a href="{{ route('admin.vendors.index') }}" class="has-submenu"
               ><i class="fas fa-briefcase"></i>&nbsp;&nbsp;Manage Categories
@@ -133,16 +133,27 @@
                   ><i class="fas fa-recycle"></i> Wastage 2 (Production → Final)</a
                 >
               </li>
+            </ul>
+          </li>
+          <!-- Add this to your sidebar menu -->
+          <li class="menu-item">
+            <a href="#" class="has-submenu">
+              <i class="fas fa-box-open"></i>&nbsp;&nbsp; Inventory Management</a>
+            <ul class="submenu">
               <li>
-                <a href="#"
-                  ><i class="fas fa-file-alt"></i> Inventory Reports</a
-                >
+                <a href="{{ route('admin.inventory.index') }}"><i class="fas fa-list"></i> Manage Inventory</a>
+              </li>
+            </ul>
+          </li>
+          <li class="menu-item">
+            <a href="#" class="has-submenu">
+              <i class="fas fa-file-invoice"></i>&nbsp;&nbsp; Invoice Management</a>
+            <ul class="submenu">
+              <li>
+                <a href="{{ route('admin.invoice.index') }}"><i class="fas fa-list"></i> All Invoices</a>
               </li>
               <li>
-                <a href="#"
-                  ><i class="fas fa-file-invoice"></i> Transaction
-                  Reports</a
-                >
+                <a href="{{ route('admin.invoice.create') }}"><i class="fas fa-plus"></i> Create Invoice</a>
               </li>
             </ul>
           </li>

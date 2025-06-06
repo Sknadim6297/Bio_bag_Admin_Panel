@@ -53,8 +53,8 @@
                           <select id="unit-1">
                               <option value="kg">kg</option>
                               <option value="g">g</option>
-                              <option value="lbs">l</option>
-                              <option value="units">Pcs</option>
+                              <option value="lbs">lbs</option>
+                              <option value="units">units</option>
                           </select>
                       </div>
                   </div>

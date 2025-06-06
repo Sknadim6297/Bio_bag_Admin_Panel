@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FinalOutputController;
 use App\Http\Controllers\Admin\GrnController;
+use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\ProductionController;
 use App\Http\Controllers\Admin\SkuController;
 use App\Http\Controllers\Admin\StockController;
@@ -70,4 +71,17 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('grn/show/{po_number}', [GrnController::class, 'show'])->name('grn.show');
 
     Route::get('/get-product-suggestions', [GrnController::class, 'getSuggestions'])->name('grn.suggestions');
+
+    Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoice.index');
+    Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoice.create');
+    Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoice.store');
+    Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoice.show');
+    Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'downloadPdf'])->name('invoice.pdf');
+    
+    // AJAX routes for invoice form
+    Route::get('/get-customers', [InvoiceController::class, 'getCustomers'])->name('get-customers');
+    Route::get('/get-customer-details', [InvoiceController::class, 'getCustomerDetails'])->name('get-customer-details');
+    Route::get('/get-micron-values', [InvoiceController::class, 'getMicronValues'])->name('get-micron-values');
+    Route::get('/get-sizes-by-micron', [InvoiceController::class, 'getSizesByMicron'])->name('get-sizes-by-micron');
+    Route::get('/get-inventory-items', [InvoiceController::class, 'getInventoryItems'])->name('get-inventory-items');
 });

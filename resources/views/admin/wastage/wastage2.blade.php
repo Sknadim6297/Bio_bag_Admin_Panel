@@ -76,7 +76,6 @@
                 <thead>
                     <tr>
                         <th>Date</th>
-                        <th>Customer</th>
                         <th>Total Production (kg)</th>
                         <th>Total Final Output (kg)</th>
                         <th>Wastage (kg)</th>
@@ -87,7 +86,6 @@
                         @if($report->total_final_output > 0)
                         <tr>
                             <td>{{ \Carbon\Carbon::parse($report->date)->format('d/m/y') }}</td>
-                            <td>{{ $report->product_name }}</td>
                             <td>{{ number_format($report->total_production, 2) }}</td>
                             <td>{{ number_format($report->total_final_output, 2) }}</td>
                             <td>{{ number_format($report->wastage, 2) }}</td>
@@ -107,6 +105,5 @@
 
 @section('scripts')
 <script>
-    // You can add JS if needed later
 </script>
 @endsection

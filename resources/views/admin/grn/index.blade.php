@@ -67,7 +67,7 @@
           <td>{{ $po->po_number }}</td>
           <td>{{ $po->vendor->vendor_name ?? '-' }}</td>
           <td>{{ $po->deliver_to_location }}</td>
-          <td>${{ number_format($po->total, 2) }}</td>
+          <td>{{ number_format($po->total) }}</td>
           <td>{{ $po->payment_terms }}</td>
           <td>{{ $po->expected_delivery }}</td>
           <td>{{ $po->terms }}</td>

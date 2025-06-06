@@ -9,23 +9,36 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
-        Schema::table('consumptions', function (Blueprint $table) {
-            $table->dropForeign(['sku_id']);
-            $table->dropColumn('sku_id');
+        // Check if stock_id column doesn't exist before adding it
+        if (!Schema::hasColumn('consumptions', 'stock_id')) {
+            Schema::table('consumptions', function (Blueprint $table) {
+                $table->foreignId('stock_id')->after('total');
+            });
+        }
 
-            $table->foreignId('stock_id')->after('total')->constrained('stocks')->onDelete('cascade');
-        });
+        // Check if sku column exists before dropping it
+        if (Schema::hasColumn('consumptions', 'sku')) {
+            Schema::table('consumptions', function (Blueprint $table) {
+                $table->dropColumn('sku');
+            });
+        }
     }
 
-    public function down()
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
     {
-        Schema::table('consumptions', function (Blueprint $table) {
-            $table->dropForeign(['stock_id']);
-            $table->dropColumn('stock_id');
+        // Restore original state
+        if (!Schema::hasColumn('consumptions', 'sku')) {
+            Schema::table('consumptions', function (Blueprint $table) {
+                $table->string('sku')->after('total')->nullable();
+            });
+        }
 
-            $table->foreignId('sku_id')->constrained('skus')->onDelete('cascade');
-        });
+        // Don't try to drop stock_id in down migration if it already existed before
+        // This prevents errors if the original table already had stock_id
     }
 };

@@ -1,12 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
-* {
+
+        * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-             font-family:"Poppins", sans-serif;
         }
+        
         body {
-           
+            font-family: Arial, sans-serif;
             font-size: 11px;
             line-height: 1.2;
             background: white;
@@ -14,6 +14,7 @@
         }
         
         .invoice-container {
+            width: 210mm;
             margin: 0 auto;
             border: 2px solid black;
             background: white;
@@ -131,6 +132,7 @@
         
         .items-table {
             width: 100%;
+            border-collapse: collapse;
             border-bottom: 2px solid black;
         }
         
@@ -251,10 +253,10 @@
             margin-bottom: 5px;
         }
         
-        /* .company-content {
+        .company-content {
             margin-left: 100px;
         }
-         */
+        
         .computer-generated {
             text-align: center;
             font-size: 10px;
@@ -262,3 +264,4 @@
             padding: 8px;
             color: #666;
         }
+   

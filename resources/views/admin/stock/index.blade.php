@@ -50,7 +50,8 @@
             <td>{{ $index + 1 }}</td>
             <td>{{ $stock->product_name }}</td>
             <td>{{ ucfirst(str_replace('_', ' ', $stock->stock)) }}</td>
-            <td>{{ number_format($stock->quantity) }}</td>
+            <td>{{ number_format($stock->quantity) . ' ' . ($stock->measurement ?? '') }}</td>
+
             <td>
                 <button class="view-btn stock-btn" data-product-id="{{ $stock->id }}" title="View Stock Movement">
                     <i class="fas fa-eye"></i>

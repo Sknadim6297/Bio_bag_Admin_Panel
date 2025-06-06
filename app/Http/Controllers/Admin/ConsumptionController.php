@@ -4,12 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Consumption;
-use App\Helpers\NumberToWords;
 use App\Models\Sku;
 use App\Models\Stock;
 use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Str; // Add this import
 use Illuminate\Support\Facades\DB;
 
 class ConsumptionController extends Controller
@@ -19,47 +16,51 @@ class ConsumptionController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Consumption::with('stock');
+        // Query with eager loading and join to get stock details
+        $query = Consumption::select(
+                'consumptions.*', 
+                'stocks.product_name as stock_name',
+                'stocks.measurement',
+            )
+            ->leftJoin('stocks', 'consumptions.stock_id', '=', 'stocks.id')
+            ->with('stock');  // Also eager load the relationship
 
-        // Apply date filters
+        // Apply filters
         if ($request->filled('from_date')) {
-            $query->whereDate('date', '>=', $request->from_date);
+            $query->whereDate('consumptions.date', '>=', $request->from_date);
         }
 
         if ($request->filled('to_date')) {
-            $query->whereDate('date', '<=', $request->to_date);
+            $query->whereDate('consumptions.date', '<=', $request->to_date);
         }
 
-        // Apply search filter
         if ($request->filled('search')) {
-            $search = $request->search;
-            $query->whereHas('stock', function ($q) use ($search) {
-                $q->where('product_name', 'like', '%' . $search . '%');
-            });
+            $query->where('stocks.product_name', 'like', '%' . $request->search . '%');
         }
-
-        // Get paginated results
-        $consumptions = $query->orderBy('date', 'desc')
-            ->orderBy('time', 'desc')
-            ->paginate(10);
 
         // Calculate total consumption
-        $totalConsumption = $query->sum('quantity');
+        $totalConsumption = $query->sum('consumptions.quantity');
+        
+        // Paginate results
+        $consumptions = $query->orderBy('consumptions.date', 'desc')->paginate(10);
 
+        // Handle AJAX requests for pagination/filtering
         if ($request->ajax()) {
             return response()->json([
                 'status' => true,
                 'data' => $consumptions->items(),
+                'total_consumption' => $totalConsumption,
                 'pagination' => [
-                    'current_page' => $consumptions->currentPage(),
-                    'last_page' => $consumptions->lastPage(),
                     'total' => $consumptions->total(),
+                    'current_page' => $consumptions->currentPage(),
+                    'per_page' => $consumptions->perPage(),
+                    'last_page' => $consumptions->lastPage(),
                 ],
-                'total_consumption' => number_format($totalConsumption, 2)
             ]);
         }
 
-        return view('admin.consumption.index');
+        // Return view for regular request
+        return view('admin.consumption.index', compact('consumptions', 'totalConsumption'));
     }
 
 
@@ -223,70 +224,18 @@ class ConsumptionController extends Controller
         return response()->json($results);
     }
 
-    public function downloadReport(Request $request)
+    /**
+     * Create an API endpoint to list all stocks for dropdown
+     */
+    public function stocksList()
     {
-        try {
-            $query = Consumption::with('stock');
-
-            // Apply filters
-            if ($request->filled('from_date')) {
-                $query->whereDate('date', '>=', $request->from_date);
-            }
-            if ($request->filled('to_date')) {
-                $query->whereDate('date', '<=', $request->to_date);
-            }
-            if ($request->filled('search')) {
-                $searchTerm = trim($request->search);
-                $query->whereHas('stock', function ($q) use ($searchTerm) {
-                    $q->where('product_name', 'like', '%' . $searchTerm . '%');
-                });
-            }
-
-            $consumptions = $query->orderBy('date', 'desc')
-                ->orderBy('time', 'desc')
-                ->get();
-
-            $total = $consumptions->sum('quantity');
-
-            // Use our custom helper instead of NumberFormatter
-            $totalInWords = NumberToWords::convert($total);
-
-            // Add search criteria to the report
-            $searchCriteria = [];
-            if ($request->filled('search')) {
-                $searchCriteria[] = "Product: " . $request->search;
-            }
-            if ($request->filled('from_date')) {
-                $searchCriteria[] = "From: " . date('d/m/Y', strtotime($request->from_date));
-            }
-            if ($request->filled('to_date')) {
-                $searchCriteria[] = "To: " . date('d/m/Y', strtotime($request->to_date));
-            }
-
-            $pdf = PDF::loadView('admin.consumption.report_pdf', [
-                'consumptions' => $consumptions,
-                'total' => $total,
-                'totalInWords' => $totalInWords,
-                'reportNumber' => 'CONS-' . now()->format('YmdHis'),
-                'date' => now()->format('d/m/Y'),
-                'filters' => $request->all(),
-                'searchCriteria' => $searchCriteria
-            ]);
-
-            // Set paper size and orientation
-            $pdf->setPaper('A4', 'portrait');
-
-            // Add report name based on search criteria
-            $fileName = 'consumption_report';
-            if ($request->filled('search')) {
-                $fileName .= '_' . Str::slug($request->search);
-            }
-            $fileName .= '_' . now()->format('Y-m-d') . '.pdf';
-
-            return $pdf->download($fileName);
-        } catch (\Exception $e) {
-
-            return back()->with('error', 'Error generating PDF: ' . $e->getMessage());
-        }
+        $stocks = \App\Models\Stock::select('id', 'product_name', 'measurement')
+            ->orderBy('product_name')
+            ->get();
+            
+        return response()->json([
+            'status' => true,
+            'data' => $stocks
+        ]);
     }
 }

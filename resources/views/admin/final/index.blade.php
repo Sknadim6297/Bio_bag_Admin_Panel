@@ -8,16 +8,11 @@
 
 <div class="dashboard-header">
   <h1>Manage Final Output</h1>
-  <div>
-    <a href="{{ route('admin.final-output.create') }}">
-      <button class="btn btn-primary">
-        <i class="fas fa-plus"></i> Add Final Output
-      </button>
-    </a>
-    <a href="{{ route('admin.final-output.download-invoice') }}" class="btn btn-success ml-2" id="download-invoice-btn">
-    <i class="fas fa-file-pdf"></i> Download Invoice
-</a>
-  </div>
+  <a href="{{ route('admin.final-output.create') }}">
+    <button class="btn btn-primary">
+      <i class="fas fa-plus"></i> Add Final Output
+    </button>
+  </a>
 </div>
 
 <!-- Filters Section -->
@@ -99,6 +94,7 @@
 @endsection
 
 @section('scripts')
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
   function fetchData() {
     const search = $('#search-input').val();
@@ -150,31 +146,15 @@
     });
   }
 
-  function updateDownloadUrl() {
-    const from = $('#from-date').val();
-    const to = $('#to-date').val();
-    const search = $('#search-input').val();
-    
-    let url = "{{ route('admin.final-output.download-invoice') }}?";
-    if (from) url += `from_date=${from}&`;
-    if (to) url += `to_date=${to}&`;
-    if (search) url += `search=${search}&`;
-    
-    $('#download-invoice-btn').attr('href', url.slice(0, -1));
-  }
-
   $(document).ready(function () {
     fetchData();
-    updateDownloadUrl();
 
     $('#search-input, #from-date, #to-date').on('change keyup', function () {
       fetchData();
-      updateDownloadUrl();
     });
 
     $('#filter-btn').on('click', function () {
       fetchData();
-      updateDownloadUrl();
     });
   });
 </script>

@@ -1,21 +1,23 @@
 <?php
 
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class FinalOutput extends Model
+class Inventory extends Model
 {
-
     use HasFactory;
 
     protected $fillable = [
         'customer_id',
-        'final_output_datetime',
-        'size',
         'micron',
+        'size',
         'quantity',
+        'hsn',
+        'description',
+        'price_per_kg',
     ];
 
     public function customer()
