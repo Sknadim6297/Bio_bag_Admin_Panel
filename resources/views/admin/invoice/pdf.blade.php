@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tax Invoice - {{ $invoice->customer->customer_name }}</title>
     <style>
+        @font-face {
+            font-family: 'RupeeFont';
+            src: url({{ public_path('fonts/DejaVuSans.ttf') }});
+        }
+        
+        .amount-prefix {
+            font-family: 'Arial', sans-serif;
+        }
+        
         * {
             margin: 0;
             padding: 0;
@@ -389,7 +398,7 @@
                     <td class="amount-col">{{ number_format($invoice->price_per_kg, 2) }}</td>
                     <td>KG</td>
                     <td></td>
-                    <td class="amount-col">{{ number_format($invoice->total_amount, 2) }}</td>
+                    <td class="amount-col"><span class="amount-prefix">Rs.</span> {{ number_format($invoice->total_amount, 2) }}</td>
                 </tr>
                 
                 @if($invoice->cgst > 0)
@@ -461,7 +470,7 @@
                     <td></td>
                     <td></td>
                     <td></td>
-                    <td class="amount-col"><strong>{{ number_format(round($invoice->final_price), 2) }} <span class="rupee-symbol">₹</span></strong></td>
+                    <td class="amount-col"><strong>Rs. {{ number_format(round($invoice->final_price), 2) }}</strong></td>
                 </tr>
             </tbody>
         </table>
