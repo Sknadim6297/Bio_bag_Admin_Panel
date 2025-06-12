@@ -2,6 +2,7 @@
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('admin/css/manage-sku.css') }}">
+<link rel="stylesheet" href="{{ asset('admin/css/styles.css') }}" />
 @endsection
 
 @section('content')
@@ -15,9 +16,11 @@
       <a href="bulk-upload.html"><button class="btn btn-success">
           <i class="fas fa-upload me-2"></i>Bulk Upload
       </button></a>
+      <a href="">
       <button class="btn btn-success">
           <i class="fas fa-download me-2"></i>Download
       </button>
+      </a>
   </div>
 </div>
 
@@ -87,7 +90,7 @@
   </div>
   <div class="pagination-buttons">
     <button class="btn btn-outline-secondary btn-sm disabled" disabled>
-      <i class="fas fa-angle-left"></i> Previous
+      <i class="fas fa-angle-left"></i> Prev
     </button>
     <button class="btn btn-outline-primary btn-sm active">1</button>
     <button class="btn btn-outline-primary btn-sm">2</button>

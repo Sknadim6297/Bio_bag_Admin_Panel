@@ -2,6 +2,7 @@
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('admin/css/manage-stock.css') }}">
+<link rel="stylesheet" href="{{ asset('admin/css/styles.css') }}" />
 
 @endsection
 
@@ -14,7 +15,7 @@
 <!-- Filter and Search Section -->
 <!-- Export Button -->
 <div class="action-bar">
-  <a href="{{ route('admin.stock.export') }}" class="btn btn-success">Export Stock to Excel</a>
+  <div style="text-align: center;"><a href="{{ route('admin.stock.export') }}"><button class="btn">Export Stock to Excel</button></a></div>
   <!-- Filter and Search Section -->
   <div class="entries-filter">
       <span>Show</span>

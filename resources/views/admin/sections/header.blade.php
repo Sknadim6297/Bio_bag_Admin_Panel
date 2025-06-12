@@ -1,4 +1,11 @@
 <div class="top-bar">
+  <!-- Left Section with Toggle Button -->
+  <div class="left">
+    <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle Sidebar">
+      <i class="fas fa-bars"></i>
+    </button>
+  </div>
+
   <!-- Right Section -->
   <div class="right">
     <span class="welcome">

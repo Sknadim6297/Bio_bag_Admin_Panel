@@ -2,6 +2,7 @@
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('admin/css/add-production.css') }}">
+<link rel="stylesheet" href="{{ asset('admin/css/styles.css') }}" />
 @endsection
 
 @section('content')

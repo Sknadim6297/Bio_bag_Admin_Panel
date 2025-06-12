@@ -2,6 +2,8 @@
 
   @section('styles')
     <link rel="stylesheet" href="{{ asset('admin/css/manage-purchase.css') }}">
+    <link rel="stylesheet" href="{{ asset('admin/css/styles.css') }}" />
+   
   @endsection
 
   @section('content')

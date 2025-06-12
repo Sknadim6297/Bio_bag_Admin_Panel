@@ -2,6 +2,7 @@
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('admin/css/manage-vendor.css') }}">
+<link rel="stylesheet" href="{{ asset('admin/css/styles.css') }}" />
 <style>
 
     .action-btns {

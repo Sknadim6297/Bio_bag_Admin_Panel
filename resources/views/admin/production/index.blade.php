@@ -2,7 +2,9 @@
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('admin/css/manage-production.css') }}">
+<link rel="stylesheet" href="{{ asset('admin/css/styles.css') }}" />
 <style>
+     
     /* Modern Dashboard Styling */
     .dashboard-header {
         display: flex;

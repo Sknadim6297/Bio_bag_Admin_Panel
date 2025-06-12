@@ -2,13 +2,14 @@
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('admin/css/final-output.css') }}">
+<link rel="stylesheet" href="{{ asset('admin/css/styles.css') }}" />
 @endsection
 
 @section('content')
 
 <div class="dashboard-header">
   <h1>Manage Final Output</h1>
-  <a href="{{ route('admin.final-output.create') }}">
+  <a href="{{ route('admin.final-output.create') }}" style="text-decoration: none;">
     <button class="btn btn-primary">
       <i class="fas fa-plus"></i> Add Final Output
     </button>

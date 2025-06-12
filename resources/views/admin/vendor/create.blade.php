@@ -2,6 +2,7 @@
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('admin/css/add-vendor.css') }}">
+<link rel="stylesheet" href="{{ asset('admin/css/styles.css') }}" />
 @endsection
 
 @section('content')
@@ -140,7 +141,7 @@
     </div>
 
     <div class="form-actions">
-        <a href="{{ route('admin.vendors.index') }}" class="btn btn-cancel">Cancel</a>
+        <a href="{{ route('admin.vendors.index') }}" style="text-decoration: none;" class="btn btn-cancel">Cancel</a>
         <button type="submit" class="btn btn-save">Save Vendor</button>
     </div>
 </form>
