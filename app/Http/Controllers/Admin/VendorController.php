@@ -8,6 +8,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\VendorImport;
 
 class VendorController extends Controller
 {
@@ -178,5 +180,82 @@ class VendorController extends Controller
         });
 
         return response()->json(['data' => $data]);
+    }
+
+    /**
+     * Import vendors from Excel file
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv',
+        ]);
+
+        try {
+            Excel::import(new VendorImport, $request->file('file'));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Vendors imported successfully!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error importing vendors: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Export template for vendor import
+     */
+    public function exportTemplate()
+    {
+        // Create a simple spreadsheet
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Add header row
+        $sheet->setCellValue('A1', 'vendor_name');
+        $sheet->setCellValue('B1', 'mobile_number');
+        $sheet->setCellValue('C1', 'address');
+        $sheet->setCellValue('D1', 'payment_terms');
+        $sheet->setCellValue('E1', 'category_of_supply');
+        $sheet->setCellValue('F1', 'gstin');
+        $sheet->setCellValue('G1', 'pan_number');
+        $sheet->setCellValue('H1', 'bank_name');
+        $sheet->setCellValue('I1', 'branch_name');
+        $sheet->setCellValue('J1', 'account_number');
+        $sheet->setCellValue('K1', 'ifsc_code');
+        $sheet->setCellValue('L1', 'status');
+        
+        // Add example data row
+        $sheet->setCellValue('A2', 'Example Vendor');
+        $sheet->setCellValue('B2', '1234567890');
+        $sheet->setCellValue('C2', '123 Main St, City');
+        $sheet->setCellValue('D2', 'Net 30');
+        $sheet->setCellValue('E2', 'raw_materials');
+        $sheet->setCellValue('F2', '22AAAAA0000A1Z5');
+        $sheet->setCellValue('G2', 'AAAAA1234A');
+        $sheet->setCellValue('H2', 'HDFC Bank');
+        $sheet->setCellValue('I2', 'Main Branch');
+        $sheet->setCellValue('J2', '123456789012');
+        $sheet->setCellValue('K2', 'HDFC0123456');
+        $sheet->setCellValue('L2', 'active');
+        
+        // Create Excel file
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        
+        // Save to output
+        ob_start();
+        $writer->save('php://output');
+        $content = ob_get_clean();
+        
+        // Return response
+        return response($content)
+            ->header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->header('Content-Disposition', 'attachment; filename="vendor_import_template.xlsx"')
+            ->header('Content-Length', strlen($content))
+            ->header('Cache-Control', 'max-age=0');
     }
 }

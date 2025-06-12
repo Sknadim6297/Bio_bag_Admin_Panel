@@ -9,6 +9,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\View;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\CustomerImport;
 
 class CustomerController extends Controller
 {
@@ -185,5 +187,81 @@ class CustomerController extends Controller
         }
 
         return view('admin.customer.index', compact('customers'));
+    }
+
+    /**
+     * Import customers from Excel file
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv',
+        ]);
+
+        try {
+            Excel::import(new CustomerImport, $request->file('file'));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Customers imported successfully!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error importing customers: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Export template for customer import
+     */
+    public function exportTemplate()
+    {
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="customer_import_template.csv"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0'
+        ];
+
+        $callback = function() {
+            $file = fopen('php://output', 'w');
+            
+            // Add header row
+            fputcsv($file, [
+                'customer_name', 
+                'mobile_number', 
+                'address', 
+                'payment_terms', 
+                'gstin', 
+                'pan_number', 
+                'bank_name', 
+                'branch_name', 
+                'account_number', 
+                'ifsc_code', 
+                'status'
+            ]);
+            
+            // Add example row
+            fputcsv($file, [
+                'Example Customer', 
+                '9876543210', 
+                '123 Main St, City', 
+                'Net 30', 
+                '22AAAAA0000A1Z5', 
+                'AAAAA1234A', 
+                'HDFC Bank', 
+                'Main Branch', 
+                '123456789012', 
+                'HDFC0123456', 
+                'active'
+            ]);
+            
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\StockController;
 use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\InvoiceController;
+use App\Http\Controllers\Admin\VendorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,3 +44,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth:admin'])->group(functi
 });
 
 Route::get('/admin/stock/movement/{id}/download', [StockController::class, 'downloadMovement'])->name('admin.stock.movement.download');
+Route::post('/admin/vendors/import', [VendorController::class, 'import'])->name('admin.vendors.import');
+Route::get('/admin/vendors/export-template', [VendorController::class, 'exportTemplate'])->name('admin.vendors.export-template');
+Route::post('/admin/customer/import', [App\Http\Controllers\Admin\CustomerController::class, 'import'])->name('admin.customer.import');
+Route::get('/admin/customer/export-template', [App\Http\Controllers\Admin\CustomerController::class, 'exportTemplate'])->name('admin.customer.export-template');
