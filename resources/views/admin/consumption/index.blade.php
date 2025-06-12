@@ -2,6 +2,7 @@
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('admin/css/manage-consumption.css') }}">
+<link rel="stylesheet" href="{{ asset('admin/css/styles.css') }}" />
 @endsection
 
 @section('content')
@@ -37,19 +38,21 @@
 </div>
 
 <!-- Consumption Table -->
-<table class="table table-bordered consumption-table">
-  <thead>
-    <tr>
-      <th>SL No</th>
-      <th>Date & Time</th>
-      <th>Product</th>
-      <th>Quantity</th>
-    </tr>
-  </thead>
-  <tbody>
-    <!-- Rows will be populated dynamically by JS -->
-  </tbody>
-</table>
+<div class="table-container">
+  <table class="table table-bordered consumption-table">
+    <thead>
+      <tr>
+        <th>SL No</th>
+        <th>Date & Time</th>
+        <th>Product</th>
+        <th>Quantity</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Rows will be populated dynamically by JS -->
+    </tbody>
+  </table>
+</div>
 
 {{-- Pagination --}}
 <div class="mt-3">

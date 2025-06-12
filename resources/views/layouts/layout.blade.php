@@ -33,6 +33,7 @@
     @include('admin.sections.header')
 
     <div class="container">
+      <div class="sidebar-overlay"></div>
       @include('admin.sections.sidebar')
 
       <div class="main-content">
@@ -54,6 +55,23 @@
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         const menuItems = document.querySelectorAll(".menu-item");
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
+
+        // Sidebar toggle functionality
+        sidebarToggle.addEventListener('click', function() {
+          sidebar.classList.toggle('active');
+          overlay.classList.toggle('active');
+          document.body.classList.toggle('sidebar-open');
+        });
+
+        // Close sidebar when clicking overlay
+        overlay.addEventListener('click', function() {
+          sidebar.classList.remove('active');
+          overlay.classList.remove('active');
+          document.body.classList.remove('sidebar-open');
+        });
 
         menuItems.forEach((item) => {
           const link = item.querySelector(".has-submenu");

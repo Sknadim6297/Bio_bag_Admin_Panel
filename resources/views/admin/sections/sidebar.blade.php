@@ -1,7 +1,7 @@
 <div class="sidebar">
     <div>
       <div class="sidebar-header">
-        <h2>Bio Bag</h2>
+        <img src="{{ asset('admin/images/logo-biobag.png') }}" alt="Bio Bag Logo" class="company-logo">
       </div>
       <nav class="sidebar-nav">
         <ul>

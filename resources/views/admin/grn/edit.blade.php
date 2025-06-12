@@ -1,6 +1,7 @@
 @extends('layouts.layout')
 @section('styles')
   <link rel="stylesheet" href="{{ asset('admin/css/manage-grn.css') }}">
+  <link rel="stylesheet" href="{{ asset('admin/css/styles.css') }}" />
 @endsection
 
 @section('content')

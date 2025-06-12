@@ -395,19 +395,39 @@ body {
 
 @media (max-width: 768px) {
     body {
-        flex-direction: column;
+        overflow: hidden;
+        width: 100%;
+        position: fixed;
     }
 
-    .sidebar {
+    .main-content {
+        overflow: hidden;
         width: 100%;
-        flex-direction: row;
-        overflow-x: auto;
-        height: auto;
-        position: static;
+        height: 100vh;
+        padding: 110px 20px 20px 20px;
+    }
+
+    .dashboard-header {
+        margin-bottom: 20px;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .dashboard-header h1 {
+        font-size: 24px;
+        margin-bottom: 0;
+    }
+
+    .btn-add {
+        width: 100%;
+        justify-content: center;
+        margin-top: 10px;
     }
 
     .action-bar {
         flex-direction: column;
+        gap: 15px;
+        margin-bottom: 20px;
     }
 
     .filter-container {
@@ -415,7 +435,106 @@ body {
         gap: 10px;
     }
 
-    .date-filter {
-        justify-content: space-between;
+    .filter-group {
+        width: 100%;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        width: 100%;
+    }
+
+    /* Table Container */
+    .table-responsive-container {
+        max-height: calc(100vh - 400px);
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 15px 0;
+        border-radius: 4px;
+        position: relative;
+    }
+
+    /* Scroll indicator */
+    .table-responsive-container::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 30px;
+        background: linear-gradient(to right, transparent, rgb(255, 255, 255));
+        pointer-events: none;
+    }
+
+    /* Custom scrollbar */
+    .table-responsive-container::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .table-responsive-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+
+    .table-responsive-container::-webkit-scrollbar-thumb {
+        background: #137d70;
+        border-radius: 3px;
+    }
+
+    .table-responsive-container::-webkit-scrollbar-thumb:hover {
+        background: #0f5d53;
+    }
+
+    .production-table th,
+    .production-table td {
+        padding: 10px;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    .summary-box {
+        margin: 15px 0;
+        padding: 10px;
+        background: white;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .summary-box h5 {
+        font-size: 16px;
+        margin: 0;
     }
 }
+
+@media (max-width: 480px) {
+    .main-content {
+        padding: 100px 15px 15px 15px;
+    }
+
+    .dashboard-header h1 {
+        font-size: 20px;
+    }
+
+    .btn-add {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+
+    .filter-group label {
+        font-size: 11px;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        padding: 5px 8px;
+        font-size: 12px;
+    }
+
+    #filter-btn {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
+
+
+

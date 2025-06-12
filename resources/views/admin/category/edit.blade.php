@@ -2,6 +2,7 @@
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('admin/css/add-vendor.css') }}">
+<link rel="stylesheet" href="{{ asset('admin/css/styles.css') }}" />
 @endsection
 
 @section('content')
@@ -41,7 +42,7 @@
       </div>
       </div> <!-- end of form-grid -->
       <div class="form-actions" style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
-        <a href="{{ route('admin.category.index') }}" class="btn btn-cancel">Cancel</a>
+        <a href="{{ route('admin.category.index') }}" style="text-decoration: none;" class="btn btn-cancel">Cancel</a>
         <button type="submit" class="btn btn-save">Update Category</button>
       </div>
     </div>

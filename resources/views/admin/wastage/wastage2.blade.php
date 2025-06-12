@@ -3,6 +3,7 @@
 @section('styles')
 <link rel="stylesheet" href="{{ asset('admin/css/wastage.css') }}">
 <link rel="stylesheet" href="{{ asset('admin/css/manage-vendor.css') }}">
+<link rel="stylesheet" href="{{ asset('admin/css/styles.css') }}" />
 <style>
     .total-wastage-box {
         background-color: #f8f9fa;

@@ -2,6 +2,7 @@
 
 @section('styles')
   <link rel="stylesheet" href="{{ asset('admin/css/manage-customer.css') }}">
+  <link rel="stylesheet" href="{{ asset('admin/css/styles.css') }}" />
 @endsection
 
 @section('content')
@@ -103,7 +104,7 @@
     </div>
     <div class="pagination-buttons">
       <button class="btn btn-outline-secondary btn-sm disabled" disabled>
-        <i class="fas fa-angle-left"></i> Previous
+        <i class="fas fa-angle-left"></i> Prev
       </button>
       <button class="btn btn-outline-primary btn-sm active">1</button>
       <button class="btn btn-outline-primary btn-sm">2</button>

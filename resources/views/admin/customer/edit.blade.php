@@ -2,6 +2,7 @@
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('admin/css/edit-customer.css') }}">
+<link rel="stylesheet" href="{{ asset('admin/css/styles.css') }}" />
 @endsection
 
 @section('content')
@@ -71,7 +72,7 @@
     </div>
     <!-- Form Actions -->
     <div class="form-actions">
-      <a href="{{ route('admin.customer.index') }}" class="btn btn-cancel">Cancel</a>
+      <a href="{{ route('admin.customer.index') }}" style="text-decoration: none;" class="btn btn-cancel">Cancel</a>
       <button type="submit" class="btn btn-save">Update Customer</button>
     </div>
     
