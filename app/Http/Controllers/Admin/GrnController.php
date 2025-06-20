@@ -127,7 +127,10 @@ class GrnController extends Controller
                 'expected_delivery' => $request->expected_delivery,
                 'payment_terms' => $request->payment_terms,
                 'subtotal' => $request->subtotal,
-                'tax' => $request->tax,
+                'cgst' => $request->cgst,
+                'sgst' => $request->sgst,
+                'igst' => $request->igst,
+                'cess' => $request->cess,
                 'discount' => $request->discount,
                 'total' => $request->total,
                 'terms' => $request->terms,
@@ -259,7 +262,91 @@ class GrnController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'po_date' => 'required|date',
+            'vendor_id' => 'required|exists:vendors,id',
+            'deliver_to_type' => 'required|in:customer,organization',
+            'deliver_to_location' => 'required|string',
+            'deliver_address' => 'required|string',
+            'expected_delivery' => 'required|date',
+            'payment_terms' => 'required|string',
+            'products' => 'required|array',
+            'products.*' => 'required|string|max:255',
+            'descriptions' => 'required|array',
+            'quantities' => 'required|array',
+            'quantities.*' => 'required|numeric',
+            'unit_prices' => 'required|array',
+            'unit_prices.*' => 'required|numeric',
+            'totals' => 'required|array',
+            'totals.*' => 'required|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        DB::beginTransaction();
+        try {
+            $po = PurchaseOrder::findOrFail($id);
+            $po->update([
+                'po_date' => $request->po_date,
+                'vendor_id' => $request->vendor_id,
+                'deliver_to_type' => $request->deliver_to_type,
+                'deliver_to_location' => $request->deliver_to_location,
+                'deliver_address' => $request->deliver_address,
+                'expected_delivery' => $request->expected_delivery,
+                'payment_terms' => $request->payment_terms,
+                'subtotal' => $request->subtotal,
+                'cgst' => $request->cgst,
+                'sgst' => $request->sgst,
+                'igst' => $request->igst,
+                'cess' => $request->cess,
+                'discount' => $request->discount,
+                'total' => $request->total,
+                'terms' => $request->terms,
+                'notes' => $request->notes,
+                'reference' => $request->reference,
+            ]);
+
+            // Remove old items
+            $po->items()->delete();
+            // Add new items
+            foreach ($request->products as $index => $productName) {
+                $description = $request->descriptions[$index];
+                $quantity = $request->quantities[$index];
+                $unit_price = $request->unit_prices[$index];
+                $total = $request->totals[$index];
+                $measurement = $request->measurements[$index] ?? null;
+                $normalizedName = Str::of($productName)->lower()->trim()->squish();
+                $normalizedMeasurement = $measurement ? Str::of($measurement)->lower()->trim() : null;
+                PurchaseOrderItem::create([
+                    'purchase_order_id' => $po->id,
+                    'product_name' => ucfirst($normalizedName),
+                    'description' => $description,
+                    'quantity' => $quantity,
+                    'unit_price' => $unit_price,
+                    'total' => $total,
+                    'measurement' => $normalizedMeasurement,
+                ]);
+            }
+
+            // Handle new attachments
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $path = $file->store('attachments', 'public');
+                    PurchaseOrderAttachment::create([
+                        'purchase_order_id' => $po->id,
+                        'file_path' => $path,
+                    ]);
+                }
+            }
+
+            DB::commit();
+            return redirect()->route('admin.grn.index')->with('success', 'Purchase Order updated successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+        }
     }
 
     /**

@@ -11,17 +11,6 @@
     <span class="welcome">
       <i class="bi bi-person-circle"></i> Welcome, {{ Auth::user()->name }}
     </span>
-    
-
-    <a href="#" class="icon-link" title="Notifications">
-      <i class="bi bi-bell-fill">
-        <span class="badge">3</span>
-      </i>
-    </a>
-
-    <a href="change-password.html" class="icon-link" title="Change Password">
-      <i class="bi bi-shield-lock-fill"></i>
-    </a>
     <a href="javascript:void(0);" id="logoutBtn" class="icon-link" title="Logout">
       <i class="bi bi-box-arrow-right"></i>
     </a>

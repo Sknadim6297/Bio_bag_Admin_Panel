@@ -3,6 +3,7 @@
 @section('styles')
 <link rel="stylesheet" href="{{ asset('admin/css/final-output.css') }}">
 <link rel="stylesheet" href="{{ asset('admin/css/styles.css') }}" />
+<meta name="csrf-token" content="{{ csrf_token() }}">
 @endsection
 
 @section('content')
@@ -60,9 +61,14 @@
 
         <div class="form-group">
           <label>&nbsp;</label>
-          <button id="filter-btn" class="btn btn-primary w-100">
-            <i class="fas fa-filter"></i> Filter
-          </button>
+          <div class="d-flex gap-2">
+            <button id="filter-btn" class="btn btn-primary w-100 me-2">
+              <i class="fas fa-filter"></i> Filter
+            </button>
+            <button id="reset-btn" class="btn btn-outline-secondary w-100">
+              <i class="fas fa-undo"></i> Reset
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -86,6 +92,7 @@
       <th>Size</th>
       <th>Micron</th>
       <th>Final Output</th>
+      <th>Action</th>
     </tr>
   </thead>
   <tbody>
@@ -97,6 +104,13 @@
 @section('scripts')
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+  // Set CSRF token for all AJAX requests
+  $.ajaxSetup({
+    headers: {
+      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    }
+  });
+
   function fetchData() {
     const search = $('#search-input').val();
     const from_date = $('#from-date').val();
@@ -122,13 +136,21 @@
           res.data.forEach((item, index) => {
             const customerName = item.customer ? item.customer.customer_name : 'N/A';
             rows += `
-              <tr>
+              <tr data-id="${item.id}">
                 <td>${index + 1}</td>
                 <td>${item.final_output_datetime}</td>
                 <td>${customerName}</td>
                 <td>${item.size}</td>
                 <td>${item.micron}</td>
                 <td>${item.quantity} kg</td>
+                <td>
+                  <a href="/admin/final-output/${item.id}/edit" class="btn btn-outline-primary btn-sm me-2" style="font-weight:600; border-radius:5px;">
+                    <i class="fas fa-pen"></i> Edit
+                  </a>
+                  <button class="btn btn-outline-danger btn-sm delete-btn" style="font-weight:600; border-radius:5px;">
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
+                </td>
               </tr>
             `;
           });
@@ -156,6 +178,51 @@
 
     $('#filter-btn').on('click', function () {
       fetchData();
+    });
+
+    // Reset button functionality
+    $('#reset-btn').on('click', function(e) {
+      e.preventDefault();
+      $('#from-date').val('');
+      $('#to-date').val('');
+      $('#customer-id').val('');
+      $('#micron').val('');
+      $('#size').val('');
+      $('#search-input').val('');
+      fetchData();
+    });
+
+    // Delete button click
+    $(document).on('click', '.delete-btn', function() {
+      const id = $(this).closest('tr').data('id');
+      Swal.fire({
+        title: 'Are you sure?',
+        text: 'This will permanently delete the record.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          $.ajax({
+            url: `/admin/final-output/${id}`,
+            method: 'POST',
+            data: { _method: 'DELETE' },
+            success: function(res) {
+              if (res.status) {
+                toastr.success(res.message);
+                fetchData();
+              } else {
+                toastr.error(res.message || 'Delete failed.');
+              }
+            },
+            error: function() {
+              toastr.error('Something went wrong.');
+            }
+          });
+        }
+      });
     });
   });
 </script>

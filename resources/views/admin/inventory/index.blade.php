@@ -182,7 +182,7 @@
 
 @section('content')
 <div class="dashboard-header">
-    <h1>Inventory Management</h1>
+    <h1>Finished good inventry</h1>
     <div class="header-actions">
         <a href="{{ route('admin.inventory.create') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Add New Inventory

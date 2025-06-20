@@ -38,6 +38,7 @@ Route::middleware('auth:admin')->group(function () {
     // Wastage Management Routes
     Route::get('/wastage1', [Wastage1Controller::class, 'index'])->name('wastage1.index');
     Route::get('/wastage2', [Wastage2Controller::class, 'index'])->name('wastage2.index');
+    Route::post('/wastage1/save-adjustment', [Wastage1Controller::class, 'saveAdjustment'])->name('wastage1.saveAdjustment');
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('admin.logout');
     Route::resource('vendors', VendorController::class);

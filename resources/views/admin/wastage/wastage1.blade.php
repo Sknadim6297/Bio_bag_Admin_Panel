@@ -4,6 +4,7 @@
 <link rel="stylesheet" href="{{ asset('admin/css/wastage.css') }}">
 <link rel="stylesheet" href="{{ asset('admin/css/manage-vendor.css') }}">
 <link rel="stylesheet" href="{{ asset('admin/css/styles.css') }}" />
+<meta name="csrf-token" content="{{ csrf_token() }}">
 @endsection
 
 @section('content')
@@ -46,13 +47,17 @@
                     <tr>
                         <th>Date</th>
                         <th>Wastage (kg)</th>
+                        <th>Own Wastage (kg)</th>
+                        <th>Discrepancy (kg)</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($wastageReport as $report)
-                    <tr>
+                    <tr data-date="{{ $report->date }}">
                         <td>{{ date('d/m/y', strtotime($report->date)) }}</td>
-                        <td>{{ number_format(abs($report->wastage), 2) }}</td>
+                        <td class="wastage-value-cell">{{ number_format(abs($report->wastage), 2) }}</td>
+                        <td><input type="number" class="form-control own-wastage-input" min="0" step="0.01" value="{{ $report->own_wastage !== null ? number_format($report->own_wastage, 2, '.', '') : '' }}" style="width:110px;"></td>
+                        <td class="discrepancy-cell">{{ $report->discrepancy !== null ? number_format($report->discrepancy, 2) : '-' }}</td>
                     </tr>
                     @endforeach
                 </tbody>
@@ -65,6 +70,12 @@
 @section('scripts')
 <script>
     $(document).ready(function() {
+        // Set CSRF token for all AJAX requests
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
         $('#filterForm').on('submit', function(e) {
             e.preventDefault();
             $.ajax({
@@ -77,6 +88,8 @@
                 }
             });
         });
+        // Discrepancy calculation for initial page
+        bindDiscrepancyEvents();
     });
 
     function resetFilters() {
@@ -88,14 +101,40 @@
     function updateTable(data) {
         var tbody = $('tbody');
         tbody.empty();
-        
         data.forEach(function(report) {
             tbody.append(`
-                <tr>
+                <tr data-date="${report.date}">
                     <td>${formatDate(report.date)}</td>
-                    <td>${formatNumber(Math.abs(report.wastage))}</td>
+                    <td class="wastage-value-cell">${formatNumber(Math.abs(report.wastage))}</td>
+                    <td><input type="number" class="form-control own-wastage-input" min="0" step="0.01" value="${report.own_wastage !== null ? formatNumber(report.own_wastage) : ''}" style="width:110px;"></td>
+                    <td class="discrepancy-cell">${report.discrepancy !== null ? formatNumber(report.discrepancy) : '-'}</td>
                 </tr>
             `);
+        });
+        bindDiscrepancyEvents();
+    }
+
+    function bindDiscrepancyEvents() {
+        $('.own-wastage-input').on('input change keyup', function() {
+            const $row = $(this).closest('tr');
+            const wastage = parseFloat($row.find('.wastage-value-cell').text()) || 0;
+            const ownWastage = parseFloat($(this).val()) || 0;
+            const date = $row.data('date');
+            // Save via AJAX
+            $.ajax({
+                url: '{{ route('admin.wastage1.saveAdjustment', [], false) }}',
+                type: 'POST',
+                data: {
+                    date: date,
+                    own_wastage: ownWastage,
+                    wastage: wastage
+                },
+                success: function(res) {
+                    if(res.status) {
+                        $row.find('.discrepancy-cell').text(formatNumber(res.discrepancy));
+                    }
+                }
+            });
         });
     }
 

@@ -71,13 +71,18 @@
 
             <div class="form-group">
                 <label for="gstin">GSTIN</label>
-                <input type="text" id="gstin" name="gstin" class="form-control" placeholder="GSTIN" pattern="^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$" value="{{ old('gstin') }}" required />
-                <small class="form-text">Format: 22AAAAA0000A1Z5</small>
-                @error('gstin')
-                    <div class="alert alert-danger">{{ $message }}</div>
-                @enderror
+                <input type="text" id="gstin" name="gstin" class="form-control" placeholder="GSTIN" pattern="^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$" value="{{ old('gstin') }}" />
+                <div class="form-group" style="margin-top: 10px;">
+                <label>
+                    <input type="checkbox" id="noGstCheckbox" name="no_gst" value="1" {{ old('no_gst') ? 'checked' : '' }}>
+                    I don't have a GST number. I want to proceed without it.
+                </label>
+                </div>
+                <div id="noGstMsg" style="display:none; color:#b94a48; font-size:13px; margin-top:5px;">
+                  You have chosen to proceed without a GST number. The GSTIN field is disabled.
+                </div>
             </div>
-
+    
             <div class="form-group">
                 <label for="panNumber">PAN Number</label>
                 <input type="text" id="panNumber" name="pan_number" class="form-control" placeholder="PAN Number" pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" value="{{ old('pan_number') }}" required />
@@ -173,9 +178,22 @@ function addNewCategory() {
 }
 
 $(document).ready(function () {
+    function toggleGstInput() {
+        if ($('#noGstCheckbox').is(':checked')) {
+            $('#gstin').prop('disabled', true).prop('required', false).val('');
+            $('#noGstMsg').show();
+        } else {
+            $('#gstin').prop('disabled', false).prop('required', true);
+            $('#noGstMsg').hide();
+        }
+    }
+    // Initial check
+    toggleGstInput();
+    // On checkbox change
+    $('#noGstCheckbox').on('change', toggleGstInput);
+
     $("#vendorForm").submit(function (e) {
         e.preventDefault();
-
         $.ajax({
             url: "{{ route('admin.vendors.store') }}", 
             method: "POST",
@@ -184,8 +202,8 @@ $(document).ready(function () {
                 if (response.success) {
                     toastr.success(response.message); 
                     setTimeout(() => {
-            window.location.href = "{{ route('admin.vendors.index') }}";
-          }, 1000);
+                        window.location.href = "{{ route('admin.vendors.index') }}";
+                    }, 1000);
                 }
             },
             error: function (xhr) {
@@ -196,6 +214,13 @@ $(document).ready(function () {
                             toastr.error(errors[field][0]); 
                         }
                     }
+                    // Scroll to first error
+                    let firstField = Object.keys(errors)[0];
+                    let $firstInput = $('[name="'+firstField+'"]');
+                    if ($firstInput.length) {
+                        $('html, body').animate({ scrollTop: $firstInput.offset().top - 100 }, 500);
+                        $firstInput.focus();
+                    }
                 } else {
                     toastr.error('Something went wrong. Please try again.'); 
                 }
@@ -203,6 +228,5 @@ $(document).ready(function () {
         });
     });
 });
-
 </script>
 @endsection

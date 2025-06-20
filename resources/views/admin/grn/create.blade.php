@@ -2,10 +2,66 @@
 @section('styles')
 <link rel="stylesheet" href="{{ asset('admin/css/add-purchase-order.css') }}">
 <link rel="stylesheet" href="{{ asset('admin/css/styles.css') }}" />
+<style>
+  .custom-file-upload {
+    border: 2px dashed #2563eb;
+    border-radius: 10px;
+    padding: 24px 16px;
+    background: #f8fafc;
+    text-align: center;
+    position: relative;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+  }
+  .custom-file-upload.dragover {
+    border-color: #1741a0;
+    background: #e0e7ef;
+  }
+  .file-upload-label {
+    display: inline-block;
+    background: #2563eb;
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 10px;
+    transition: background 0.2s;
+  }
+  .file-upload-label:hover {
+    background: #1741a0;
+  }
+  .file-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0 0;
+    text-align: left;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .file-list li {
+    background: #f1f5f9;
+    border-radius: 4px;
+    padding: 6px 12px;
+    margin-bottom: 4px;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .file-list .remove-file {
+    color: #ef4444;
+    cursor: pointer;
+    margin-left: 10px;
+    font-size: 18px;
+  }
+</style>
 @endsection
 @section('content')
 <div class="dashboard-header">
-    <h1>Add Purchase Order</h1>
+    <h1>Add Purchase Bill</h1>
   </div>
 <form class="purchase-order-form" id="purchaseOrderForm" enctype="multipart/form-data">
   @csrf
@@ -88,11 +144,11 @@
     <div class="form-row">
         <div class="form-col">
           <div class="form-group">
-            <label>Attach Files to Purchase Order</label>
-            <div class="file-upload">
-              <input type="file" id="file-upload" name="attachments[]" class="file-upload-input" multiple>
+            <label>Attach Files to Purchase Bill</label>
+            <div class="custom-file-upload" id="customFileUpload">
+              <input type="file" id="file-upload" name="attachments[]" class="file-upload-input" multiple hidden>
               <label for="file-upload" class="file-upload-label">
-                <i class="fas fa-paperclip"></i> Choose Files
+                <i class="fas fa-cloud-upload-alt"></i> <span id="file-upload-text">Choose Files or Drag & Drop</span>
               </label>
               <ul class="file-list" id="file-list"></ul>
             </div>
@@ -111,8 +167,8 @@
                     <th>Product</th>
                     <th>Description</th>
                     <th>Quantity</th>
-                    <th>Unit Price</th>
                     <th>Measurement</th>
+                    <th>Unit Price</th>
                     <th>Total</th>
                     <th>Action</th>
                 </tr>
@@ -130,9 +186,6 @@
                         <input type="number" name="quantities[]" class="form-control quantity" min="1" value="1" required>
                     </td>
                     <td>
-                        <input type="number" name="unit_prices[]" class="form-control unit-price" min="0" step="0.01" required>
-                    </td>
-                    <td>
                         <select class="form-select" name="measurements[]" required>
                             <option value="">Select Unit</option>
                             @foreach (['kg', 'g', 'l', 'pcs'] as $unit)
@@ -140,6 +193,10 @@
                             @endforeach
                         </select>
                     </td>
+                    <td>
+                        <input type="number" name="unit_prices[]" class="form-control unit-price" min="0" step="0.01" required>
+                    </td>
+                   
                     <td>
                         <input type="text" name="totals[]" class="form-control total" readonly>
                     </td>
@@ -161,9 +218,21 @@
         <label for="subtotal">Subtotal</label>
         <input type="text" id="subtotal" name="subtotal" readonly>
       </div>
+      <div class="form-col tax-group-cgst-sgst">
+        <label for="cgst">CGST (%)</label>
+        <input type="number" id="cgst" name="cgst" value="0" min="0" max="100">
+      </div>
+      <div class="form-col tax-group-cgst-sgst">
+        <label for="sgst">SGST (%)</label>
+        <input type="number" id="sgst" name="sgst" value="0" min="0" max="100">
+      </div>
+      <div class="form-col tax-group-igst" style="display:none;">
+        <label for="igst">IGST (%)</label>
+        <input type="number" id="igst" name="igst" value="0" min="0" max="100">
+      </div>
       <div class="form-col">
-        <label for="tax">Tax (%)</label>
-        <input type="number" id="tax" name="tax" value="0">
+        <label for="cess">CESS (%)</label>
+        <input type="number" id="cess" name="cess" value="0" min="0" max="100">
       </div>
       <div class="form-col">
         <label for="discount">Discount</label>
@@ -279,9 +348,37 @@ function formatPaymentTerm(term) {
   });
 
   // Summary calculation
-  ['tax', 'discount'].forEach(id => {
+  ['cgst', 'sgst', 'igst', 'cess', 'discount'].forEach(id => {
     document.getElementById(id).addEventListener('input', calculateSummary);
   });
+
+  // Show/hide CGST/SGST or IGST fields
+  function updateTaxFieldsVisibility() {
+    const cgst = parseFloat(document.getElementById('cgst').value) || 0;
+    const sgst = parseFloat(document.getElementById('sgst').value) || 0;
+    const igst = parseFloat(document.getElementById('igst').value) || 0;
+    if (cgst > 0 || sgst > 0) {
+      // Show CGST/SGST, hide IGST
+      document.querySelectorAll('.tax-group-cgst-sgst').forEach(el => el.style.display = 'block');
+      document.querySelectorAll('.tax-group-igst').forEach(el => el.style.display = 'none');
+      document.getElementById('igst').value = 0;
+    } else if (igst > 0) {
+      // Show IGST, hide CGST/SGST
+      document.querySelectorAll('.tax-group-cgst-sgst').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.tax-group-igst').forEach(el => el.style.display = 'block');
+      document.getElementById('cgst').value = 0;
+      document.getElementById('sgst').value = 0;
+    } else {
+      // Show all by default
+      document.querySelectorAll('.tax-group-cgst-sgst').forEach(el => el.style.display = 'block');
+      document.querySelectorAll('.tax-group-igst').forEach(el => el.style.display = 'block');
+    }
+  }
+  document.getElementById('cgst').addEventListener('input', updateTaxFieldsVisibility);
+  document.getElementById('sgst').addEventListener('input', updateTaxFieldsVisibility);
+  document.getElementById('igst').addEventListener('input', updateTaxFieldsVisibility);
+  // Initial call
+  updateTaxFieldsVisibility();
 
   function calculateSummary() {
     let subtotal = 0;
@@ -291,10 +388,20 @@ function formatPaymentTerm(term) {
 
     document.getElementById('subtotal').value = subtotal.toFixed(2);
 
-    const taxPercent = parseFloat(document.getElementById('tax').value) || 0;
+    const cgst = parseFloat(document.getElementById('cgst').value) || 0;
+    const sgst = parseFloat(document.getElementById('sgst').value) || 0;
+    const igst = parseFloat(document.getElementById('igst').value) || 0;
+    const cess = parseFloat(document.getElementById('cess').value) || 0;
     const discount = parseFloat(document.getElementById('discount').value) || 0;
-    const taxAmount = (subtotal * taxPercent) / 100;
-    const total = subtotal + taxAmount - discount;
+
+    let taxAmount = 0;
+    if (igst > 0) {
+      taxAmount = subtotal * (igst / 100);
+    } else {
+      taxAmount = subtotal * ((cgst + sgst) / 100);
+    }
+    let cessAmount = subtotal * (cess / 100);
+    const total = subtotal + taxAmount + cessAmount - discount;
 
     document.getElementById('total').value = total.toFixed(2);
   }
@@ -422,6 +529,61 @@ window.addEventListener('DOMContentLoaded', (event) => {
 });
 
 });
+
+// Custom file upload logic
+const fileInput = document.getElementById('file-upload');
+const fileLabel = document.getElementById('file-upload-text');
+const fileList = document.getElementById('file-list');
+const customFileUpload = document.getElementById('customFileUpload');
+
+fileInput.addEventListener('change', function(e) {
+  updateFileList();
+});
+
+customFileUpload.addEventListener('dragover', function(e) {
+  e.preventDefault();
+  customFileUpload.classList.add('dragover');
+});
+customFileUpload.addEventListener('dragleave', function(e) {
+  customFileUpload.classList.remove('dragover');
+});
+customFileUpload.addEventListener('drop', function(e) {
+  e.preventDefault();
+  customFileUpload.classList.remove('dragover');
+  const files = Array.from(e.dataTransfer.files);
+  const dataTransfer = new DataTransfer();
+  Array.from(fileInput.files).forEach(f => dataTransfer.items.add(f));
+  files.forEach(f => dataTransfer.items.add(f));
+  fileInput.files = dataTransfer.files;
+  updateFileList();
+});
+
+function updateFileList() {
+  fileList.innerHTML = '';
+  const files = Array.from(fileInput.files);
+  if (files.length === 0) {
+    fileLabel.textContent = 'Choose Files or Drag & Drop';
+  } else {
+    fileLabel.textContent = files.length + ' file(s) selected';
+  }
+  files.forEach((file, idx) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span>${file.name}</span> <span class="remove-file" data-index="${idx}"><i class="fas fa-times"></i></span>`;
+    fileList.appendChild(li);
+  });
+  // Remove file logic
+  fileList.querySelectorAll('.remove-file').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const index = parseInt(this.getAttribute('data-index'));
+      const filesArr = Array.from(fileInput.files);
+      filesArr.splice(index, 1);
+      const dataTransfer = new DataTransfer();
+      filesArr.forEach(f => dataTransfer.items.add(f));
+      fileInput.files = dataTransfer.files;
+      updateFileList();
+    });
+  });
+}
 
 </script>
 @endsection

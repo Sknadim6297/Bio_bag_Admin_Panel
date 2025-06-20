@@ -138,7 +138,7 @@
           <!-- Add this to your sidebar menu -->
           <li class="menu-item">
             <a href="#" class="has-submenu">
-              <i class="fas fa-box-open"></i>&nbsp;&nbsp; Inventory Management</a>
+              <i class="fas fa-box-open"></i>&nbsp;&nbsp; Finished good inventry</a>
             <ul class="submenu">
               <li>
                 <a href="{{ route('admin.inventory.index') }}"><i class="fas fa-list"></i> Manage Inventory</a>
