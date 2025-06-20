@@ -14,6 +14,8 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
 
+  <!-- Font Awesome for eye icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
   <style>
     body {
@@ -85,7 +87,7 @@
         <div class="input-group">
           <input type="password" class="form-control" id="password" required>
           <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-            <img src="images/eye-icon-4.png" id="eyeIcon" alt="Show Password" class="eye-icon">
+            <i id="eyeIcon" class="fa fa-eye eye-icon" aria-hidden="true"></i>
           </button>
         </div>
       </div>
@@ -130,6 +132,21 @@
         $('#errorMessage').text("Invalid credentials or server error.").show();
       }
     });
+  });
+
+  // Show/hide password functionality
+  $('#togglePassword').on('click', function () {
+    const passwordInput = $('#password');
+    const eyeIcon = $('#eyeIcon');
+    const type = passwordInput.attr('type') === 'password' ? 'text' : 'password';
+    passwordInput.attr('type', type);
+    if(type === 'text') {
+      eyeIcon.removeClass('fa-eye').addClass('fa-eye-slash');
+      eyeIcon.attr('aria-label', 'Hide Password');
+    } else {
+      eyeIcon.removeClass('fa-eye-slash').addClass('fa-eye');
+      eyeIcon.attr('aria-label', 'Show Password');
+    }
   });
 </script>
   <!-- Toastr JS -->

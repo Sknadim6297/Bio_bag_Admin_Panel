@@ -40,20 +40,28 @@ class VendorController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $rules = [
             'vendor_name' => 'required|string|max:255',
             'mobile_number' => 'required|digits:10',
             'address' => 'required|string',
             'payment_terms' => 'required|string',
             'category_of_supply' => 'required|string',
-            'gstin' => 'required|string|unique:vendors,gstin',
             'pan_number' => 'required|string|unique:vendors,pan_number',
             'bank_name' => 'required|string',
             'branch_name' => 'required|string',
             'account_number' => 'required|digits_between:9,18',
             'ifsc_code' => 'required|string|regex:/^[A-Z]{4}0[A-Z0-9]{6}$/',
-            'active' => 'active|in:active,inactive',
-        ]);
+            'status' => 'required|in:active,inactive',
+        ];
+
+        // Only require GSTIN if no_gst is NOT checked
+        if (!$request->has('no_gst')) {
+            $rules['gstin'] = 'required|string|unique:vendors,gstin';
+        } else {
+            $rules['gstin'] = 'nullable|string|unique:vendors,gstin';
+        }
+
+        $validated = $request->validate($rules);
 
         $vendor_code = 'VEN' . rand(1000, 9999);
         $lead_time = Carbon::now();
@@ -66,7 +74,7 @@ class VendorController extends Controller
         $vendor->payment_terms = $validated['payment_terms'];
         $vendor->lead_time = $lead_time;
         $vendor->category_of_supply = $validated['category_of_supply'];
-        $vendor->gstin = $validated['gstin'];
+        $vendor->gstin = $validated['gstin'] ?? null;
         $vendor->pan_number = $validated['pan_number'];
         $vendor->bank_name = $validated['bank_name'];
         $vendor->branch_name = $validated['branch_name'];

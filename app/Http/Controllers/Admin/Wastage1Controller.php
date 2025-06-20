@@ -8,6 +8,7 @@ use App\Models\Production;
 use App\Models\Stock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\Wastage1Adjustment;
 
 class Wastage1Controller extends Controller
 {
@@ -42,6 +43,16 @@ class Wastage1Controller extends Controller
     // Get results ordered by date (newest first)
     $wastageReport = $query->orderBy('c.date', 'desc')->get();
 
+    // Fetch adjustments for all dates
+    $adjustments = Wastage1Adjustment::whereIn('date', $wastageReport->pluck('date'))->get()->keyBy('date');
+
+    // Attach own_wastage and discrepancy to each report row
+    foreach ($wastageReport as $report) {
+        $adj = $adjustments[$report->date] ?? null;
+        $report->own_wastage = $adj ? $adj->own_wastage : null;
+        $report->discrepancy = $adj ? $adj->discrepancy : null;
+    }
+
     // Calculate total wastage
     $totalWastage = $wastageReport->sum(function ($report) {
         return abs($report->wastage);
@@ -66,6 +77,26 @@ class Wastage1Controller extends Controller
         'totalWastage',
         'dates'
     ));
+}
+
+public function saveAdjustment(Request $request)
+{
+    $request->validate([
+        'date' => 'required|date',
+        'own_wastage' => 'nullable|numeric',
+        'wastage' => 'required|numeric',
+    ]);
+    $ownWastage = $request->input('own_wastage');
+    $wastage = $request->input('wastage');
+    $discrepancy = $wastage - $ownWastage;
+    $adj = Wastage1Adjustment::updateOrCreate(
+        ['date' => $request->date],
+        ['own_wastage' => $ownWastage, 'discrepancy' => $discrepancy]
+    );
+    return response()->json([
+        'status' => true,
+        'discrepancy' => $discrepancy
+    ]);
 }
 
 }

@@ -114,10 +114,28 @@
                 <td><strong>Subtotal:</strong></td>
                 <td>₹{{ number_format($po->subtotal, 2) }}</td>
             </tr>
-            @if($po->tax)
+            @if($po->cgst)
             <tr>
-                <td><strong>Tax:</strong></td>
-                <td>₹{{ number_format($po->tax, 2) }}</td>
+                <td><strong>CGST:</strong></td>
+                <td>₹{{ number_format($po->cgst, 2) }}</td>
+            </tr>
+            @endif
+            @if($po->sgst)
+            <tr>
+                <td><strong>SGST:</strong></td>
+                <td>₹{{ number_format($po->sgst, 2) }}</td>
+            </tr>
+            @endif
+            @if($po->igst)
+            <tr>
+                <td><strong>IGST:</strong></td>
+                <td>₹{{ number_format($po->igst, 2) }}</td>
+            </tr>
+            @endif
+            @if($po->cess)
+            <tr>
+                <td><strong>CESS:</strong></td>
+                <td>₹{{ number_format($po->cess, 2) }}</td>
             </tr>
             @endif
             @if($po->discount)

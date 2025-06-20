@@ -52,6 +52,10 @@
           <th>Vendor</th>
           <th>Deliver To</th>
           <th>Total Price</th>
+          <th>CGST (%)</th>
+          <th>SGST (%)</th>
+          <th>IGST (%)</th>
+          <th>CESS (%)</th>
           <th>Payment Terms</th>
           <th>Expected Delivery</th>
           <th>Terms & Condition</th>
@@ -59,6 +63,7 @@
           <th>Reference#</th>
           <th>View</th>
           <th>Download</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -70,19 +75,31 @@
           <td>{{ $po->vendor->vendor_name ?? '-' }}</td>
           <td>{{ $po->deliver_to_location }}</td>
           <td>{{ number_format($po->total) }}</td>
+          <td>{{ $po->cgst ?? 0 }}</td>
+          <td>{{ $po->sgst ?? 0 }}</td>
+          <td>{{ $po->igst ?? 0 }}</td>
+          <td>{{ $po->cess ?? 0 }}</td>
           <td>{{ $po->payment_terms }}</td>
           <td>{{ $po->expected_delivery }}</td>
           <td>{{ $po->terms }}</td>
           <td>{{ $po->notes }}</td>
           <td>{{ $po->reference }}</td>
             <td>
-              <button class="view-btn" data-po='@json($po)' title="View Details">
-                <i class="fas fa-eye"></i> View
-            </button>
+              <button class="action-btn view-btn" data-po='@json($po)' title="View Details">
+                <i class="fas fa-eye"></i>
+              </button>
             </td>
           <td>
-            <button class="download-btn" data-id="{{ $po->id }}" title="Download Report">
-                <i class="fas fa-download"></i> Download
+            <button class="action-btn download-btn" data-id="{{ $po->id }}" title="Download Report">
+              <i class="fas fa-download"></i>
+            </button>
+          </td>
+          <td>
+            <a href="{{ route('admin.grn.edit', $po->id) }}" class="action-btn edit-btn" title="Edit">
+              <i class="fas fa-edit"></i>
+            </a>
+            <button class="action-btn delete-btn" data-id="{{ $po->id }}" title="Delete">
+              <i class="fas fa-trash"></i>
             </button>
           </td>
         </tr>
@@ -103,11 +120,11 @@
                     <th>Vendor</th>
                     <th>Deliver To</th>
                     <th>Total Price</th>
+                    <th>CGST (%)</th>
+                    <th>SGST (%)</th>
+                    <th>IGST (%)</th>
+                    <th>CESS (%)</th>
                     <th>Payment Terms</th>
-                    <th>Expected Delivery</th>
-                    <th>Terms & Condition</th>
-                    <th>Customer Notes</th>
-                    <th>Reference#</th>
                 </tr>
             </thead>
             <tbody>
@@ -153,11 +170,11 @@
                     <td>${po.vendor?.vendor_name || '-'}</td>
                     <td>${po.deliver_to_location}</td>
                     <td>₹${parseFloat(po.total).toLocaleString()}</td>
+                    <td>${po.cgst ?? 0}</td>
+                    <td>${po.sgst ?? 0}</td>
+                    <td>${po.igst ?? 0}</td>
+                    <td>${po.cess ?? 0}</td>
                     <td>${po.payment_terms}</td>
-                    <td>${po.expected_delivery}</td>
-                    <td>${po.terms}</td>
-                    <td>${po.notes}</td>
-                    <td>${po.reference}</td>
                 </tr>
             `;
             document.querySelector('#invoiceModal .invoice-table tbody').innerHTML = headerRow;
@@ -215,4 +232,81 @@
         });
     });
     </script>
+    <script>
+    $(document).on('click', '.delete-btn', function() {
+      var id = $(this).data('id');
+      if(confirm('Are you sure you want to delete this purchase order?')) {
+        $.ajax({
+          url: '/admin/grn/' + id,
+          type: 'DELETE',
+          data: {
+            _token: '{{ csrf_token() }}'
+          },
+          success: function(response) {
+            if(response.success) {
+              // Remove the row from the table
+              $('button.delete-btn[data-id="' + id + '"]').closest('tr').remove();
+              alert('Purchase Order deleted successfully!');
+            } else {
+              alert('Error: ' + (response.message || 'Could not delete.'));
+            }
+          },
+          error: function(xhr) {
+            alert('Error: ' + (xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Could not delete.'));
+          }
+        });
+      }
+    });
+    </script>
+  @endsection
+
+  @section('styles')
+  <style>
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      margin: 0 4px;
+      font-size: 18px;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .view-btn {
+      background: #2563eb;
+      color: #fff;
+    }
+    .view-btn:hover {
+      background: #1741a0;
+      color: #fff;
+    }
+    .edit-btn {
+      background: #fbbf24;
+      color: #fff;
+    }
+    .edit-btn:hover {
+      background: #b9810c;
+      color: #fff;
+    }
+    .delete-btn {
+      background: #ef4444;
+      color: #fff;
+    }
+    .delete-btn:hover {
+      background: #991b1b;
+      color: #fff;
+    }
+    .download-btn {
+      background: #64748b;
+      color: #fff;
+    }
+    .download-btn:hover {
+      background: #334155;
+      color: #fff;
+    }
+  </style>
   @endsection

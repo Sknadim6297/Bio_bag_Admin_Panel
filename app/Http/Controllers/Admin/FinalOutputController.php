@@ -127,17 +127,39 @@ class FinalOutputController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit($id)
     {
-        //
+        $finalOutput = \App\Models\FinalOutput::findOrFail($id);
+        $customers = \App\Models\Customer::select('id', 'customer_name')->get();
+        return view('admin.final.edit', compact('finalOutput', 'customers'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $finalOutput = \App\Models\FinalOutput::findOrFail($id);
+        $date = $request->input('output_date');
+        $time = $request->input('output_time');
+        $finalOutputDateTime = date("Y-m-d H:i:s", strtotime("$date $time"));
+        $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+            'size' => 'required|string',
+            'micron' => 'required|integer|min:0',
+            'quantity' => 'required|numeric|min:0',
+        ]);
+        $finalOutput->update([
+            'customer_id' => $request->customer_id,
+            'final_output_datetime' => $finalOutputDateTime,
+            'size' => $request->size,
+            'micron' => $request->micron,
+            'quantity' => $request->quantity,
+        ]);
+        return response()->json([
+            'status' => true,
+            'message' => 'Final output record updated successfully.'
+        ]);
     }
 
     /**
@@ -145,7 +167,12 @@ class FinalOutputController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $finalOutput = FinalOutput::findOrFail($id);
+        $finalOutput->delete();
+        return response()->json([
+            'status' => true,
+            'message' => 'Final output record deleted successfully.'
+        ]);
     }
 
     public function filter(Request $request)
