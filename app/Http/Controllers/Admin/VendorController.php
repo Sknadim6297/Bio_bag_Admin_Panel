@@ -16,14 +16,52 @@ class VendorController extends Controller
     /**
      * Display a listing of the resource.
      */
-    // VendorController.php
-
     public function index(Request $request)
     {
-        $vendors = Vendor::paginate(10);
+        \Illuminate\Support\Facades\Log::info('Vendor index request:', [
+            'search' => $request->input('search'),
+            'per_page' => $request->input('per_page', 10),
+            'page' => $request->input('page', 1),
+            'is_ajax' => $request->input('is_ajax'),
+            'ajax' => $request->ajax()
+        ]);
+        
+        $perPage = $request->input('per_page', 10);
+        $searchTerm = $request->input('search');
+        
+        $query = Vendor::query();
+        
+        // Handle search if provided
+        if ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('vendor_name', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('vendor_code', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('mobile_number', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('payment_terms', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('address', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('status', 'like', '%' . $searchTerm . '%');
+            });
+        }
+        
+        $vendors = $query->paginate($perPage);
+        $vendors->appends($request->all());
+
+        // Handle AJAX requests for search/filter/pagination
+        if ($request->ajax() || $request->input('is_ajax')) {
+            try {
+                $response = $this->createVendorTableResponse($vendors, $request);
+                return response()->json($response);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Error generating vendor search response: ' . $e->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An error occurred while processing your request',
+                    'total' => 0
+                ], 500);
+            }
+        }
+
         $totalVendors = Vendor::count();
-
-
         return view('admin.vendor.index', compact('vendors', 'totalVendors'));
     }
 
@@ -166,29 +204,6 @@ class VendorController extends Controller
 
         return response()->json(['success' => false, 'message' => 'Error occurred while deleting vendor.']);
     }
-    public function search(Request $request)
-    {
-        $search = $request->input('search');
-
-        $vendors = Vendor::where('vendor_name', 'like', "%{$search}%")
-            ->orWhere('vendor_code', 'like', "%{$search}%")
-            ->get();
-
-        $data = $vendors->map(function ($vendor) {
-            return [
-                'vendor_name' => $vendor->vendor_name,
-                'vendor_code' => $vendor->vendor_code,
-                'mobile_number' => $vendor->mobile_number,
-                'payment_terms' => $vendor->payment_terms,
-                'address' => $vendor->address,
-                'status' => $vendor->status,
-                'edit_url' => route('admin.vendors.edit', $vendor->id),
-                'delete_url' => route('admin.vendors.destroy', $vendor->id),
-            ];
-        });
-
-        return response()->json(['data' => $data]);
-    }
 
     /**
      * Import vendors from Excel file
@@ -265,5 +280,127 @@ class VendorController extends Controller
             ->header('Content-Disposition', 'attachment; filename="vendor_import_template.xlsx"')
             ->header('Content-Length', strlen($content))
             ->header('Cache-Control', 'max-age=0');
+    }
+
+    /**
+     * Create a consistent response for vendor table AJAX requests
+     */
+    private function createVendorTableResponse($vendors, $request)
+    {
+        $vendorsHtml = '';
+        foreach ($vendors as $index => $vendor) {
+            $slNo = ($vendors->currentPage() - 1) * $vendors->perPage() + $index + 1;
+            $statusBadge = $vendor->status == 'active' ? 'bg-success' : 'bg-secondary';
+            
+            $vendorsHtml .= '<tr>';
+            $vendorsHtml .= '<td>' . $slNo . '</td>';
+            $vendorsHtml .= '<td>' . htmlspecialchars($vendor->vendor_name) . '</td>';
+            $vendorsHtml .= '<td>' . htmlspecialchars($vendor->vendor_code) . '</td>';
+            $vendorsHtml .= '<td>' . htmlspecialchars($vendor->mobile_number) . '</td>';
+            $vendorsHtml .= '<td>' . htmlspecialchars($vendor->payment_terms) . '</td>';
+            $vendorsHtml .= '<td>' . htmlspecialchars($vendor->address) . '</td>';
+            $vendorsHtml .= '<td><span class="badge ' . $statusBadge . '">' . ucfirst($vendor->status) . '</span></td>';
+            $vendorsHtml .= '<td>';
+            $vendorsHtml .= '<div class="action-buttons">';
+            $vendorsHtml .= '<a href="' . route('admin.vendors.edit', $vendor->id) . '" class="btn btn-sm btn-primary me-1" title="Edit">';
+            $vendorsHtml .= '<i class="fas fa-edit"></i><span class="action-text">Edit</span></a>';
+            $vendorsHtml .= '<a href="javascript:void(0);" class="btn btn-sm btn-danger delete-item" data-url="' . route('admin.vendors.destroy', $vendor->id) . '" title="Delete">';
+            $vendorsHtml .= '<i class="fas fa-trash-alt"></i><span class="action-text">Delete</span></a>';
+            $vendorsHtml .= '</div>';
+            $vendorsHtml .= '</td>';
+            $vendorsHtml .= '</tr>';
+        }
+
+        // Generate pagination HTML
+        $paginationHtml = '';
+        if ($vendors->hasPages()) {
+            $paginationHtml = '<div class="pagination-container"><nav aria-label="Pagination Navigation" role="navigation">';
+            $paginationHtml .= '<ul class="pagination">';
+            
+            $currentPage = $vendors->currentPage();
+            $lastPage = $vendors->lastPage();
+            
+            // Previous Page Link
+            if ($currentPage <= 1) {
+                $paginationHtml .= '<li class="page-item disabled" aria-disabled="true"><span class="page-link">‹</span></li>';
+            } else {
+                $prevUrl = $vendors->url($currentPage - 1);
+                $paginationHtml .= '<li class="page-item"><a class="page-link" href="' . $prevUrl . '" rel="prev">‹</a></li>';
+            }
+            
+            // Smart pagination logic
+            $start = max(1, $currentPage - 2);
+            $end = min($lastPage, $currentPage + 2);
+            
+            // Show first page if not in range
+            if ($start > 1) {
+                $paginationHtml .= '<li class="page-item"><a class="page-link" href="' . $vendors->url(1) . '">1</a></li>';
+                if ($start > 2) {
+                    $paginationHtml .= '<li class="page-item disabled"><span class="page-link">…</span></li>';
+                }
+            }
+            
+            // Show page numbers in range
+            for ($page = $start; $page <= $end; $page++) {
+                if ($page == $currentPage) {
+                    $paginationHtml .= '<li class="page-item active" aria-current="page"><span class="page-link">' . $page . '</span></li>';
+                } else {
+                    $paginationHtml .= '<li class="page-item"><a class="page-link" href="' . $vendors->url($page) . '">' . $page . '</a></li>';
+                }
+            }
+            
+            // Show last page if not in range
+            if ($end < $lastPage) {
+                if ($end < $lastPage - 1) {
+                    $paginationHtml .= '<li class="page-item disabled"><span class="page-link">…</span></li>';
+                }
+                $paginationHtml .= '<li class="page-item"><a class="page-link" href="' . $vendors->url($lastPage) . '">' . $lastPage . '</a></li>';
+            }
+            
+            // Next Page Link
+            if ($currentPage >= $lastPage) {
+                $paginationHtml .= '<li class="page-item disabled" aria-disabled="true"><span class="page-link">›</span></li>';
+            } else {
+                $nextUrl = $vendors->url($currentPage + 1);
+                $paginationHtml .= '<li class="page-item"><a class="page-link" href="' . $nextUrl . '" rel="next">›</a></li>';
+            }
+            
+            $paginationHtml .= '</ul>';
+            $paginationHtml .= '</nav></div>';
+        }
+
+        // Calculate showing information
+        $from = ($vendors->currentPage() - 1) * $vendors->perPage() + 1;
+        $to = min($vendors->currentPage() * $vendors->perPage(), $vendors->total());
+        $showingInfo = "Showing {$from} to {$to} of {$vendors->total()} entries";
+
+        $response = [
+            'vendors_html' => $vendorsHtml,
+            'pagination_html' => $paginationHtml,
+            'showing_info' => $showingInfo,
+            'total' => $vendors->total()
+        ];
+        
+        // Add debug information if requested
+        if ($request->has('debug')) {
+            $response['debug'] = [
+                'request' => [
+                    'search' => $request->input('search'),
+                    'per_page' => $vendors->perPage(),
+                    'page' => $vendors->currentPage(),
+                ],
+                'pagination' => [
+                    'current_page' => $vendors->currentPage(),
+                    'last_page' => $vendors->lastPage(),
+                    'per_page' => $vendors->perPage(),
+                    'total' => $vendors->total(),
+                ],
+                'timestamp' => now()->toDateTimeString()
+            ];
+            
+            \Illuminate\Support\Facades\Log::info('Vendor response created', $response);
+        }
+        
+        return $response;
     }
 }
