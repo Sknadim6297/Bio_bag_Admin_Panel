@@ -10,7 +10,7 @@
     <h1>Manage Customer</h1>
 
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <p class="mb-0">Total Customer: <strong>{{ $customers->count() }}</strong></p>
+      <p class="mb-0">Total Customer: <strong id="totalCustomers">{{ $customers->total() }}</strong></p>
       <div>
         <a href="{{ route('admin.customer.create') }}">
           <button class="btn btn-success">
@@ -50,67 +50,59 @@
     </div>
   </div>
 
-  <div class="table-responsive">
-    <table class="table table-bordered table-striped">
-      <thead class="table-dark">
-        <tr>
-          <th>Sl No</th>
-          <th>Customer Name</th>
-          <th>Customer Code</th>
-          <th>Mobile Number</th>
-          <th>Payment Term</th>
-          <th>Address</th>
-          <th>Status</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="customerTableBody">
-        @foreach ($customers as $index => $customer)
+  <div class="table-container">
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped">
+        <thead class="table-dark">
           <tr>
-            <td>{{ $loop->iteration }}</td>
-            <td>{{ $customer->customer_name }}</td>
-            <td>{{ $customer->customer_code }}</td>
-            <td>{{ $customer->mobile_number }}</td>
-            <td>{{ $customer->payment_terms }}</td>
-            <td>{{ $customer->address }}</td>
-            <td>
-              <span class="badge {{ $customer->status == 'active' ? 'bg-success' : 'bg-secondary' }}">
-                {{ ucfirst($customer->status) }}
-              </span>
-            </td>
-            <td>
-              <div class="action-buttons">
-                <a href="{{ route('admin.customer.edit', $customer->id) }}" class="btn btn-sm btn-primary me-1" title="Edit">
-                  <i class="fas fa-edit"></i><span class="action-text">Edit</span>
-                </a>
-                <a href="javascript:void(0);" class="btn btn-sm btn-danger delete-item" data-url="{{ route('admin.customer.destroy', $customer->id) }}" title="Delete">
-                  <i class="fas fa-trash-alt"></i><span class="action-text">Delete</span>
-                </a>
-              </div>
-            </td>
+            <th>Sl No</th>
+            <th>Customer Name</th>
+            <th>Customer Code</th>
+            <th>Mobile Number</th>
+            <th>Payment Term</th>
+            <th>Address</th>
+            <th>Status</th>
+            <th>Action</th>
           </tr>
-        @endforeach
-      </tbody>
-    </table>
-  </div>
-
-  <div class="pagination">
-    {{ $customers->links() }}
-  </div>
-
-  <div class="pagination-controls d-flex justify-content-between align-items-center mt-3">
-    <div class="showing-entries">
-      Showing <span>{{ $customers->firstItem() }}</span> to <span>{{ $customers->lastItem() }}</span> of <span>{{ $customers->total() }}</span> entries
+        </thead>
+        <tbody id="customerTableBody">
+          @foreach ($customers as $index => $customer)
+            <tr>
+              <td>{{ $loop->iteration }}</td>
+              <td>{{ $customer->customer_name }}</td>
+              <td>{{ $customer->customer_code }}</td>
+              <td>{{ $customer->mobile_number }}</td>
+              <td>{{ $customer->payment_terms }}</td>
+              <td>{{ $customer->address }}</td>
+              <td>
+                <span class="badge {{ $customer->status == 'active' ? 'bg-success' : 'bg-secondary' }}">
+                  {{ ucfirst($customer->status) }}
+                </span>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <a href="{{ route('admin.customer.edit', $customer->id) }}" class="btn btn-sm btn-primary me-1" title="Edit">
+                    <i class="fas fa-edit"></i><span class="action-text">Edit</span>
+                  </a>
+                  <a href="javascript:void(0);" class="btn btn-sm btn-danger delete-item" data-url="{{ route('admin.customer.destroy', $customer->id) }}" title="Delete">
+                    <i class="fas fa-trash-alt"></i><span class="action-text">Delete</span>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          @endforeach
+        </tbody>
+      </table>
     </div>
-    <div class="pagination-buttons">
-      <button class="btn btn-outline-secondary btn-sm disabled" disabled>
-        <i class="fas fa-angle-left"></i> Prev
-      </button>
-      <button class="btn btn-outline-primary btn-sm active">1</button>
-      <button class="btn btn-outline-primary btn-sm">2</button>
-      <button class="btn btn-outline-secondary btn-sm">
-        Next <i class="fas fa-angle-right"></i>
-      </button>
+
+    <!-- Pagination Section -->
+    <div class="table-footer">
+      <div class="pagination-info">
+        <span class="showing-text">Loading...</span>
+      </div>
+      <div class="pagination-wrapper">
+        <!-- Pagination buttons will be loaded here via AJAX -->
+      </div>
     </div>
   </div>
 
@@ -152,35 +144,135 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
   $(document).ready(function () {
-  
+    let currentSearch = '';
+    let currentPerPage = $('#entriesSelect').val() || 10;
+    
+    // Initialize the page
+    performSearch(1);
+    
+    // Handle search input
     $('#customerSearch').on('keyup', function () {
-      let searchTerm = $(this).val();
-
+      currentSearch = $(this).val();
+      performSearch(1); // Reset to first page when searching
+    });
+    
+    // Handle entries per page change
+    $('#entriesSelect').on('change', function () {
+      currentPerPage = $(this).val();
+      performSearch(1); // Reset to first page when changing entries per page
+    });
+    
+    // Handle pagination clicks
+    $(document).on('click', '.pagination-wrapper a', function (e) {
+      e.preventDefault();
+      let url = $(this).attr('href');
+      
+      if (url) {
+        // Extract page number from URL
+        let urlParams = new URLSearchParams(url.split('?')[1] || '');
+        let page = urlParams.get('page') || 1;
+        performSearch(page);
+      }
+    });
+    
+    function performSearch(page = 1) {
       $.ajax({
         url: "{{ route('admin.customer.search') }}",
         type: "GET",
-        data: { search: searchTerm },
+        data: { 
+          search: currentSearch,
+          per_page: currentPerPage,
+          page: page
+        },
+        beforeSend: function() {
+          // Add loading indicator
+          $('#customerTableBody').html('<tr><td colspan="8" class="text-center">Loading...</td></tr>');
+        },
         success: function (response) {
           $('#customerTableBody').html(response.customers);
-          $('.pagination').html(response.pagination);
+          $('.pagination-wrapper').html(response.pagination);
+          
+          // Update showing entries text
+          if (response.showing) {
+            $('.showing-text').html(
+              'Showing ' + response.showing.from + ' to ' + 
+              response.showing.to + ' of ' + 
+              response.showing.total + ' entries'
+            );
+            
+            // Update total customer count
+            $('#totalCustomers').text(response.showing.total);
+          }
+          
+          // Show "No results" message if empty
+          if (response.showing && response.showing.total === 0) {
+            $('#customerTableBody').html('<tr><td colspan="8" class="text-center">No customers found matching your search criteria.</td></tr>');
+            $('.pagination-wrapper').html(''); // Clear pagination when no results
+            $('.showing-text').html('No entries to show');
+          }
         },
         error: function (xhr) {
-          console.error(xhr.responseText);
+          console.error('Search error:', xhr.responseText);
+          $('#customerTableBody').html('<tr><td colspan="8" class="text-center text-danger">Error loading data. Please try again.</td></tr>');
+          
+          // Show user-friendly error message
+          if (xhr.status === 500) {
+            alert('Server error occurred. Please try again.');
+          } else if (xhr.status === 404) {
+            alert('Search endpoint not found. Please contact administrator.');
+          } else {
+            alert('Error occurred while searching. Please try again.');
+          }
         }
       });
-    });
-    $(document).on('click', '.pagination a', function (e) {
-      e.preventDefault();
-      let url = $(this).attr('href');
+    }
 
-      $.ajax({
-        url: url,
-        type: "GET",
-        success: function (response) {
-          $('#customerTableBody').html(response.customers);
-          $('.pagination').html(response.pagination);
+    // Handle delete functionality
+    $(document).on('click', '.delete-item', function(e) {
+        e.preventDefault();
+        
+        if (confirm('Are you sure you want to delete this customer?')) {
+            let deleteUrl = $(this).data('url');
+            let $row = $(this).closest('tr');
+            
+            $.ajax({
+                url: deleteUrl,
+                type: 'DELETE',
+                data: {
+                    '_token': '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Refresh the search to update pagination and counts
+                        performSearch();
+                        
+                        if (typeof toastr !== 'undefined') {
+                            toastr.success('Customer deleted successfully');
+                        } else {
+                            alert('Customer deleted successfully');
+                        }
+                    } else {
+                        if (typeof toastr !== 'undefined') {
+                            toastr.error(response.message || 'Error deleting customer');
+                        } else {
+                            alert(response.message || 'Error deleting customer');
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    let errorMessage = 'Error deleting customer. Please try again.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+                    
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error(errorMessage);
+                    } else {
+                        alert(errorMessage);
+                    }
+                }
+            });
         }
-      });
     });
 
     // Modal handling
@@ -327,6 +419,10 @@
     color: #666;
 }
 
+.custom-modal-close:hover {
+    color: #000;
+}
+
 .custom-modal-body {
     padding: 20px;
 }
@@ -346,6 +442,12 @@
     border-radius: 4px;
     font-size: 14px;
     margin-bottom: 8px;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 .alert-info {
@@ -382,5 +484,262 @@
 
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+/* Table Loading State */
+.table tbody tr td {
+    vertical-align: middle;
+}
+
+/* Search Input Focus */
+#customerSearch:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Action Buttons Hover Effects */
+.action-buttons .btn {
+    transition: all 0.3s ease;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.action-buttons .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.action-buttons .btn-primary {
+    background: linear-gradient(135deg, #123458 0%, #1e4d7a 100%);
+    border-color: #123458;
+}
+
+.action-buttons .btn-primary:hover {
+    background: linear-gradient(135deg, #0f2943 0%, #1a4166 100%);
+    border-color: #0f2943;
+}
+
+.action-buttons .btn-danger:hover {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+/* Table Container */
+.table-container {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(18, 52, 88, 0.15);
+    overflow: hidden;
+    margin-bottom: 20px;
+    border: 1px solid rgba(18, 52, 88, 0.1);
+}
+
+.table-container .table-responsive {
+    border-radius: 12px 12px 0 0;
+    margin-bottom: 0;
+}
+
+.table-container .table {
+    margin-bottom: 0;
+    border-radius: 12px 12px 0 0;
+}
+
+.table-container .table thead th {
+    border-top: none;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 12px;
+    color: #fff;
+    border-bottom: 2px solid #123458;
+}
+
+.table-container .table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table-container .table tbody tr:hover {
+    background-color: rgba(18, 52, 88, 0.05);
+    transition: background-color 0.2s ease;
+}
+
+/* Table Footer & Pagination */
+.table-footer {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.pagination-info {
+    color: #123458;
+    font-size: 14px;
+    font-weight: 600;
+    flex: 1;
+}
+
+.showing-text {
+    display: inline-block;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #123458 0%, #1e4d7a 100%);
+    border-radius: 25px;
+    font-size: 13px;
+    color: #fff;
+    box-shadow: 0 3px 6px rgba(18, 52, 88, 0.3);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.pagination-wrapper {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+}
+
+.pagination-wrapper nav {
+    margin: 0;
+}
+
+/* Force horizontal pagination layout */
+.pagination-wrapper .pagination {
+    margin: 0;
+    gap: 6px;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    list-style: none;
+}
+
+.pagination .page-item {
+    margin: 0;
+    display: inline-flex !important;
+    flex-direction: row !important;
+}
+
+.pagination .page-link {
+    border: 2px solid #123458;
+    color: #123458;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    background: #fff;
+    min-width: 40px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(18, 52, 88, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.pagination .page-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #123458 0%, #1e4d7a 100%);
+    transition: left 0.3s ease;
+    z-index: -1;
+}
+
+.pagination .page-link:hover {
+    color: #fff;
+    border-color: #123458;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(18, 52, 88, 0.4);
+}
+
+.pagination .page-link:hover::before {
+    left: 0;
+}
+
+.pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, #123458 0%, #1e4d7a 100%);
+    border-color: #123458;
+    color: #fff;
+    box-shadow: 0 4px 8px rgba(18, 52, 88, 0.5);
+    font-weight: 700;
+    transform: scale(1.05);
+}
+
+.pagination .page-item.active .page-link::before {
+    left: 0;
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #adb5bd;
+    pointer-events: none;
+    background: #f8f9fa;
+    border-color: #dee2e6;
+    opacity: 0.6;
+    box-shadow: none;
+}
+
+.pagination .page-link:focus {
+    box-shadow: 0 0 0 3px rgba(18, 52, 88, 0.25);
+    outline: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .action-text {
+        display: none;
+    }
+    
+    .custom-modal {
+        width: 95%;
+        margin: 10px;
+    }
+    
+    .table-footer {
+        padding: 15px;
+        gap: 12px;
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .pagination-info {
+        font-size: 13px;
+        order: 2;
+        flex: none;
+    }
+    
+    .showing-text {
+        padding: 8px 14px;
+        font-size: 12px;
+    }
+    
+    .pagination-wrapper {
+        order: 1;
+        justify-content: center;
+    }
+    
+    .pagination-wrapper .pagination {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .pagination .page-link {
+        padding: 6px 10px;
+        font-size: 13px;
+        min-width: 35px;
+    }
+    
+    .pagination .page-item.active .page-link {
+        transform: scale(1.02);
+    }
 }
 </style>

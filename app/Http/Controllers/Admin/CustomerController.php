@@ -19,11 +19,101 @@ class CustomerController extends Controller
      */
     public function index(Request $request)
     {
-        $customers = Customer::paginate(10);
+        $perPage = $request->input('per_page', 10);
+        $customers = Customer::paginate($perPage);
 
         if ($request->ajax()) {
-            $view = view('admin.customer.index', compact('customers'))->render();
-            return response()->json(['table' => $view]);
+            $customersHtml = '';
+            foreach ($customers as $index => $customer) {
+                $slNo = ($customers->currentPage() - 1) * $customers->perPage() + $index + 1;
+                $statusBadge = $customer->status == 'active' ? 'bg-success' : 'bg-secondary';
+                
+                $customersHtml .= '<tr>';
+                $customersHtml .= '<td>' . $slNo . '</td>';
+                $customersHtml .= '<td>' . htmlspecialchars($customer->customer_name) . '</td>';
+                $customersHtml .= '<td>' . htmlspecialchars($customer->customer_code) . '</td>';
+                $customersHtml .= '<td>' . htmlspecialchars($customer->mobile_number) . '</td>';
+                $customersHtml .= '<td>' . htmlspecialchars($customer->payment_terms) . '</td>';
+                $customersHtml .= '<td>' . htmlspecialchars($customer->address) . '</td>';
+                $customersHtml .= '<td><span class="badge ' . $statusBadge . '">' . ucfirst($customer->status) . '</span></td>';
+                $customersHtml .= '<td>';
+                $customersHtml .= '<div class="action-buttons">';
+                $customersHtml .= '<a href="' . route('admin.customer.edit', $customer->id) . '" class="btn btn-sm btn-primary me-1" title="Edit">';
+                $customersHtml .= '<i class="fas fa-edit"></i><span class="action-text">Edit</span></a>';
+                $customersHtml .= '<a href="javascript:void(0);" class="btn btn-sm btn-danger delete-item" data-url="' . route('admin.customer.destroy', $customer->id) . '" title="Delete">';
+                $customersHtml .= '<i class="fas fa-trash-alt"></i><span class="action-text">Delete</span></a>';
+                $customersHtml .= '</div>';
+                $customersHtml .= '</td>';
+                $customersHtml .= '</tr>';
+            }
+
+            // Generate pagination HTML manually with smart pagination
+            $paginationHtml = '';
+            if ($customers->hasPages()) {
+                $paginationHtml .= '<nav aria-label="Pagination Navigation" role="navigation">';
+                $paginationHtml .= '<ul class="pagination">';
+                
+                $currentPage = $customers->currentPage();
+                $lastPage = $customers->lastPage();
+                
+                // Previous Page Link
+                if ($currentPage <= 1) {
+                    $paginationHtml .= '<li class="page-item disabled" aria-disabled="true"><span class="page-link">‹</span></li>';
+                } else {
+                    $prevUrl = $customers->url($currentPage - 1);
+                    $paginationHtml .= '<li class="page-item"><a class="page-link" href="' . $prevUrl . '" rel="prev">‹</a></li>';
+                }
+                
+                // Smart pagination logic
+                $start = max(1, $currentPage - 2);
+                $end = min($lastPage, $currentPage + 2);
+                
+                // Show first page if not in range
+                if ($start > 1) {
+                    $paginationHtml .= '<li class="page-item"><a class="page-link" href="' . $customers->url(1) . '">1</a></li>';
+                    if ($start > 2) {
+                        $paginationHtml .= '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                    }
+                }
+                
+                // Show page numbers in range
+                for ($page = $start; $page <= $end; $page++) {
+                    if ($page == $currentPage) {
+                        $paginationHtml .= '<li class="page-item active" aria-current="page"><span class="page-link">' . $page . '</span></li>';
+                    } else {
+                        $paginationHtml .= '<li class="page-item"><a class="page-link" href="' . $customers->url($page) . '">' . $page . '</a></li>';
+                    }
+                }
+                
+                // Show last page if not in range
+                if ($end < $lastPage) {
+                    if ($end < $lastPage - 1) {
+                        $paginationHtml .= '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                    }
+                    $paginationHtml .= '<li class="page-item"><a class="page-link" href="' . $customers->url($lastPage) . '">' . $lastPage . '</a></li>';
+                }
+                
+                // Next Page Link
+                if ($currentPage >= $lastPage) {
+                    $paginationHtml .= '<li class="page-item disabled" aria-disabled="true"><span class="page-link">›</span></li>';
+                } else {
+                    $nextUrl = $customers->url($currentPage + 1);
+                    $paginationHtml .= '<li class="page-item"><a class="page-link" href="' . $nextUrl . '" rel="next">›</a></li>';
+                }
+                
+                $paginationHtml .= '</ul>';
+                $paginationHtml .= '</nav>';
+            }
+
+            return response()->json([
+                'customers' => $customersHtml,
+                'pagination' => $paginationHtml,
+                'showing' => [
+                    'from' => $customers->firstItem() ?: 0,
+                    'to' => $customers->lastItem() ?: 0,
+                    'total' => $customers->total()
+                ]
+            ]);
         }
 
         return view('admin.customer.index', compact('customers'));
@@ -160,6 +250,7 @@ class CustomerController extends Controller
     public function search(Request $request)
     {
         $searchTerm = $request->input('search');
+        $perPage = $request->input('per_page', 10);
 
         $query = Customer::query();
 
@@ -174,15 +265,100 @@ class CustomerController extends Controller
             });
         }
         
-        $customers = $query->paginate(10);
+        $customers = $query->paginate($perPage);
+        $customers->appends($request->all());
 
         if ($request->ajax()) {
-            $tableView = view('admin.customer.index', compact('customers'))->render();
-            $paginationView = View::make('pagination::bootstrap-5', ['paginator' => $customers])->render();
+            $customersHtml = '';
+            foreach ($customers as $index => $customer) {
+                $slNo = ($customers->currentPage() - 1) * $customers->perPage() + $index + 1;
+                $statusBadge = $customer->status == 'active' ? 'bg-success' : 'bg-secondary';
+                
+                $customersHtml .= '<tr>';
+                $customersHtml .= '<td>' . $slNo . '</td>';
+                $customersHtml .= '<td>' . htmlspecialchars($customer->customer_name) . '</td>';
+                $customersHtml .= '<td>' . htmlspecialchars($customer->customer_code) . '</td>';
+                $customersHtml .= '<td>' . htmlspecialchars($customer->mobile_number) . '</td>';
+                $customersHtml .= '<td>' . htmlspecialchars($customer->payment_terms) . '</td>';
+                $customersHtml .= '<td>' . htmlspecialchars($customer->address) . '</td>';
+                $customersHtml .= '<td><span class="badge ' . $statusBadge . '">' . ucfirst($customer->status) . '</span></td>';
+                $customersHtml .= '<td>';
+                $customersHtml .= '<div class="action-buttons">';
+                $customersHtml .= '<a href="' . route('admin.customer.edit', $customer->id) . '" class="btn btn-sm btn-primary me-1" title="Edit">';
+                $customersHtml .= '<i class="fas fa-edit"></i><span class="action-text">Edit</span></a>';
+                $customersHtml .= '<a href="javascript:void(0);" class="btn btn-sm btn-danger delete-item" data-url="' . route('admin.customer.destroy', $customer->id) . '" title="Delete">';
+                $customersHtml .= '<i class="fas fa-trash-alt"></i><span class="action-text">Delete</span></a>';
+                $customersHtml .= '</div>';
+                $customersHtml .= '</td>';
+                $customersHtml .= '</tr>';
+            }
+
+            // Generate pagination HTML manually with smart pagination
+            $paginationHtml = '';
+            if ($customers->hasPages()) {
+                $paginationHtml .= '<nav aria-label="Pagination Navigation" role="navigation">';
+                $paginationHtml .= '<ul class="pagination">';
+                
+                $currentPage = $customers->currentPage();
+                $lastPage = $customers->lastPage();
+                
+                // Previous Page Link
+                if ($currentPage <= 1) {
+                    $paginationHtml .= '<li class="page-item disabled" aria-disabled="true"><span class="page-link">‹</span></li>';
+                } else {
+                    $prevUrl = $customers->url($currentPage - 1);
+                    $paginationHtml .= '<li class="page-item"><a class="page-link" href="' . $prevUrl . '" rel="prev">‹</a></li>';
+                }
+                
+                // Smart pagination logic
+                $start = max(1, $currentPage - 2);
+                $end = min($lastPage, $currentPage + 2);
+                
+                // Show first page if not in range
+                if ($start > 1) {
+                    $paginationHtml .= '<li class="page-item"><a class="page-link" href="' . $customers->url(1) . '">1</a></li>';
+                    if ($start > 2) {
+                        $paginationHtml .= '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                    }
+                }
+                
+                // Show page numbers in range
+                for ($page = $start; $page <= $end; $page++) {
+                    if ($page == $currentPage) {
+                        $paginationHtml .= '<li class="page-item active" aria-current="page"><span class="page-link">' . $page . '</span></li>';
+                    } else {
+                        $paginationHtml .= '<li class="page-item"><a class="page-link" href="' . $customers->url($page) . '">' . $page . '</a></li>';
+                    }
+                }
+                
+                // Show last page if not in range
+                if ($end < $lastPage) {
+                    if ($end < $lastPage - 1) {
+                        $paginationHtml .= '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                    }
+                    $paginationHtml .= '<li class="page-item"><a class="page-link" href="' . $customers->url($lastPage) . '">' . $lastPage . '</a></li>';
+                }
+                
+                // Next Page Link
+                if ($currentPage >= $lastPage) {
+                    $paginationHtml .= '<li class="page-item disabled" aria-disabled="true"><span class="page-link">›</span></li>';
+                } else {
+                    $nextUrl = $customers->url($currentPage + 1);
+                    $paginationHtml .= '<li class="page-item"><a class="page-link" href="' . $nextUrl . '" rel="next">›</a></li>';
+                }
+                
+                $paginationHtml .= '</ul>';
+                $paginationHtml .= '</nav>';
+            }
 
             return response()->json([
-                'table' => $tableView,
-                'pagination' => $paginationView,
+                'customers' => $customersHtml,
+                'pagination' => $paginationHtml,
+                'showing' => [
+                    'from' => $customers->firstItem() ?: 0,
+                    'to' => $customers->lastItem() ?: 0,
+                    'total' => $customers->total()
+                ]
             ]);
         }
 

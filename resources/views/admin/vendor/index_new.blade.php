@@ -98,12 +98,10 @@
     <!-- Pagination Section -->
     <div class="table-footer">
       <div class="pagination-info">
-        <span class="showing-text">
-          Showing {{ $vendors->firstItem() ?: 0 }} to {{ $vendors->lastItem() ?: 0 }} of {{ $vendors->total() }} entries
-        </span>
+        <span class="showing-text">Loading...</span>
       </div>
-      <div class="pagination-wrapper" id="paginationWrapper">
-        <!-- Pagination will be populated by JavaScript -->
+      <div class="pagination-wrapper">
+        <!-- Pagination buttons will be loaded here via AJAX -->
       </div>
     </div>
   </div>
@@ -146,99 +144,11 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
   $(document).ready(function () {
-    // Function to clean up pagination display issues
-    function cleanupPagination() {
-      // Remove any text nodes directly inside pagination-wrapper
-      $('.pagination-wrapper').contents().each(function() {
-        if (this.nodeType === Node.TEXT_NODE) {
-          $(this).remove();
-        }
-      });
-      
-      // Ensure all pagination content is properly wrapped
-      $('.pagination-wrapper nav').wrap('<div class="pagination-container"></div>');
-      
-      // Remove any duplicate elements or unwanted text
-      $('.pagination-container').siblings().not('.pagination-container').each(function() {
-        if ($(this).is('text') || !$(this).hasClass('pagination-container')) {
-          $(this).remove();
-        }
-      });
-    }
-    
-    // Function to populate initial pagination on page load
-    function populateInitialPagination() {
-      const currentPage = {{ $vendors->currentPage() }};
-      const lastPage = {{ $vendors->lastPage() }};
-      const hasPages = {{ $vendors->hasPages() ? 'true' : 'false' }};
-      
-      if (hasPages) {
-        let paginationHtml = '<div class="pagination-container"><nav aria-label="Pagination Navigation" role="navigation">';
-        paginationHtml += '<ul class="pagination">';
-        
-        // Previous Page Link
-        if (currentPage <= 1) {
-          paginationHtml += '<li class="page-item disabled" aria-disabled="true"><span class="page-link">‹</span></li>';
-        } else {
-          const prevUrl = "{{ $vendors->url($vendors->currentPage() - 1) }}";
-          paginationHtml += '<li class="page-item"><a class="page-link" href="' + prevUrl + '" rel="prev">‹</a></li>';
-        }
-        
-        // Smart pagination logic
-        const start = Math.max(1, currentPage - 2);
-        const end = Math.min(lastPage, currentPage + 2);
-        
-        // Show first page if not in range
-        if (start > 1) {
-          const firstUrl = "{{ $vendors->url(1) }}";
-          paginationHtml += '<li class="page-item"><a class="page-link" href="' + firstUrl + '">1</a></li>';
-          if (start > 2) {
-            paginationHtml += '<li class="page-item disabled"><span class="page-link">…</span></li>';
-          }
-        }
-        
-        // Show page numbers in range
-        for (let page = start; page <= end; page++) {
-          if (page == currentPage) {
-            paginationHtml += '<li class="page-item active" aria-current="page"><span class="page-link">' + page + '</span></li>';
-          } else {
-            const pageUrl = "{{ $vendors->url(':page') }}".replace(':page', page);
-            paginationHtml += '<li class="page-item"><a class="page-link" href="' + pageUrl + '">' + page + '</a></li>';
-          }
-        }
-        
-        // Show last page if not in range
-        if (end < lastPage) {
-          if (end < lastPage - 1) {
-            paginationHtml += '<li class="page-item disabled"><span class="page-link">…</span></li>';
-          }
-          const lastUrl = "{{ $vendors->url($vendors->lastPage()) }}";
-          paginationHtml += '<li class="page-item"><a class="page-link" href="' + lastUrl + '">' + lastPage + '</a></li>';
-        }
-        
-        // Next Page Link
-        if (currentPage >= lastPage) {
-          paginationHtml += '<li class="page-item disabled" aria-disabled="true"><span class="page-link">›</span></li>';
-        } else {
-          const nextUrl = "{{ $vendors->url($vendors->currentPage() + 1) }}";
-          paginationHtml += '<li class="page-item"><a class="page-link" href="' + nextUrl + '" rel="next">›</a></li>';
-        }
-        
-        paginationHtml += '</ul></nav></div>';
-        $('#paginationWrapper').html(paginationHtml);
-      }
-    }
-    
     let currentSearch = '';
     let currentPerPage = $('#entriesSelect').val() || 10;
-    let isFirstLoad = true;
     
-    // Initialize the page - no need to call performSearch immediately
-    // The initial data is already loaded by the server
-    console.log('Vendor management page initialized');
-    
-    // Populate initial pagination
-    populateInitialPagination();
+    // Initialize the page
+    performSearch(1);
     
     // Handle search input
     $('#vendorSearch').on('keyup', function () {
@@ -253,7 +163,7 @@
     });
     
     // Handle pagination clicks
-    $(document).on('click', '#paginationWrapper a', function (e) {
+    $(document).on('click', '.pagination-wrapper a', function (e) {
       e.preventDefault();
       let url = $(this).attr('href');
       
@@ -266,73 +176,53 @@
     });
     
     function performSearch(page = 1) {
-      // Always use the index route for consistency
-      let url = "{{ route('admin.vendors.index') }}";
-      
       $.ajax({
-        url: url,
+        url: "{{ route('admin.vendor.search') }}",
         type: "GET",
         data: { 
           search: currentSearch,
           per_page: currentPerPage,
-          page: page,
-          is_ajax: true,
-          _token: "{{ csrf_token() }}"
-        },
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': "{{ csrf_token() }}"
+          page: page
         },
         beforeSend: function() {
           // Add loading indicator
           $('#vendorTableBody').html('<tr><td colspan="8" class="text-center">Loading...</td></tr>');
         },
         success: function (response) {
-          console.log('Search response:', response);
+          $('#vendorTableBody').html(response.vendors);
+          $('.pagination-wrapper').html(response.pagination);
           
-          try {
-            // Check if the response has the expected structure
-            if (response && typeof response === 'object') {
-              if (response.vendors_html) {
-                // Update the table body with the new HTML
-                $('#vendorTableBody').html(response.vendors_html);
-                
-                // Update pagination - completely replace the content to prevent duplicates
-                $('#paginationWrapper').html(response.pagination_html || '');
-                
-                // Update showing entries text and total count
-                if (response.showing_info) {
-                  $('.showing-text').html(response.showing_info);
-                  $('#totalVendors').text(response.total);
-                }
-                
-                // Show "No results" message if empty
-                if (response.total === 0) {
-                  $('#vendorTableBody').html('<tr><td colspan="8" class="text-center">No vendors found matching your search criteria.</td></tr>');
-                  $('#paginationWrapper').html(''); // Clear pagination when no results
-                  $('.showing-text').html('No entries to show');
-                }
-              } else {
-                // Handle unexpected response format with detailed logging
-                console.error('Unexpected response format. Missing vendors_html:', response);
-                $('#vendorTableBody').html('<tr><td colspan="8" class="text-center text-danger">Unexpected server response. Missing vendors_html property.</td></tr>');
-              }
-            } else {
-              // Handle non-object responses
-              console.error('Invalid response format (not an object):', response);
-              $('#vendorTableBody').html('<tr><td colspan="8" class="text-center text-danger">Invalid response from server (not a JSON object).</td></tr>');
-            }
-          } catch (e) {
-            console.error('Error processing response:', e);
-            $('#vendorTableBody').html('<tr><td colspan="8" class="text-center text-danger">Error processing server response: ' + e.message + '</td></tr>');
+          // Update showing entries text
+          if (response.showing) {
+            $('.showing-text').html(
+              'Showing ' + response.showing.from + ' to ' + 
+              response.showing.to + ' of ' + 
+              response.showing.total + ' entries'
+            );
+            
+            // Update total vendor count
+            $('#totalVendors').text(response.showing.total);
+          }
+          
+          // Show "No results" message if empty
+          if (response.showing && response.showing.total === 0) {
+            $('#vendorTableBody').html('<tr><td colspan="8" class="text-center">No vendors found matching your search criteria.</td></tr>');
+            $('.pagination-wrapper').html(''); // Clear pagination when no results
+            $('.showing-text').html('No entries to show');
           }
         },
-        error: function (xhr, status, error) {
-          console.error('AJAX error:', xhr.responseText);
-          console.error('Status:', status);
-          console.error('Error:', error);
-          
+        error: function (xhr) {
+          console.error('Search error:', xhr.responseText);
           $('#vendorTableBody').html('<tr><td colspan="8" class="text-center text-danger">Error loading data. Please try again.</td></tr>');
+          
+          // Show user-friendly error message
+          if (xhr.status === 500) {
+            alert('Server error occurred. Please try again.');
+          } else if (xhr.status === 404) {
+            alert('Search endpoint not found. Please contact administrator.');
+          } else {
+            alert('Error occurred while searching. Please try again.');
+          }
         }
       });
     }
@@ -711,21 +601,8 @@
     flex: 0 0 auto;
 }
 
-#paginationWrapper {
-    display: flex;
-    align-items: center;
-    flex: 0 0 auto;
-}
-
-.pagination-wrapper nav,
-#paginationWrapper nav {
+.pagination-wrapper nav {
     margin: 0;
-}
-
-/* Hide any direct text nodes in the pagination wrapper */
-.pagination-wrapper > :not(nav):not(.pagination-container),
-#paginationWrapper > :not(nav):not(.pagination-container) {
-    display: none !important;
 }
 
 /* Force horizontal pagination layout */
@@ -845,14 +722,12 @@
         font-size: 12px;
     }
     
-    .pagination-wrapper,
-    #paginationWrapper {
+    .pagination-wrapper {
         order: 1;
         justify-content: center;
     }
     
-    .pagination-wrapper .pagination,
-    #paginationWrapper .pagination {
+    .pagination-wrapper .pagination {
         justify-content: center;
         flex-wrap: wrap;
     }
